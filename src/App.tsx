@@ -32,6 +32,8 @@ import { ProgramPage } from './components/ProgramPage';
 import { AddEntryModal } from './components/AddEntryModal';
 import { ToolkitDrawer } from './components/ToolkitDrawer';
 import { CompareModal } from './components/CompareModal';
+import { QuickCompareModal } from './components/QuickCompareModal';
+import { FooterNewsletter } from './components/FooterNewsletter';
 
 const STORAGE_KEYS = {
   LIKES: 'badeelak_liked_alts_v1',
@@ -118,6 +120,7 @@ export default function App() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isToolkitOpen, setIsToolkitOpen] = useState(false);
   const [isCompareOpen, setIsCompareOpen] = useState(false);
+  const [quickCompareProgramId, setQuickCompareProgramId] = useState<string | null>(null);
 
   // Sync URL hash for program pages
   useEffect(() => {
@@ -470,6 +473,74 @@ export default function App() {
     return getSimilarPrograms(activeProgram, unifiedPrograms, 6);
   }, [unifiedPrograms, activeProgram]);
 
+  const quickComparePair = useMemo(() => {
+    if (!quickCompareProgramId) return null;
+    const selected = unifiedPrograms.find((p) => p.id === quickCompareProgramId);
+    if (!selected) return null;
+
+    if (selected.kind === 'commercial' && selected.commercialEntry) {
+      const sortedAlts = [...selected.commercialEntry.alternatives].sort((a, b) => {
+        if (a.isBestFree !== b.isBestFree) return a.isBestFree ? -1 : 1;
+        return b.likes - a.likes;
+      });
+      const bestAlt = sortedAlts[0];
+      const counterpart = bestAlt
+        ? unifiedPrograms.find((p) => p.id === bestAlt.id) ?? null
+        : null;
+      return counterpart
+        ? {
+            selectedProgram: selected,
+            counterpartProgram: counterpart,
+            counterpartRoleLabel: 'أفضل بديل مجاني',
+          }
+        : null;
+    }
+
+    if (selected.kind === 'alternative' && selected.parentCommercial) {
+      const sortedAlts = [...selected.parentCommercial.alternatives].sort((a, b) => {
+        if (a.isBestFree !== b.isBestFree) return a.isBestFree ? -1 : 1;
+        return b.likes - a.likes;
+      });
+      const bestAlt = sortedAlts[0];
+
+      if (bestAlt && bestAlt.id !== selected.id) {
+        const counterpart = unifiedPrograms.find((p) => p.id === bestAlt.id) ?? null;
+        if (counterpart) {
+          return {
+            selectedProgram: selected,
+            counterpartProgram: counterpart,
+            counterpartRoleLabel: 'أفضل بديل مجاني',
+          };
+        }
+      }
+
+      const parentProgram =
+        unifiedPrograms.find((p) => p.id === selected.parentCommercial?.id) ?? null;
+      return parentProgram
+        ? {
+            selectedProgram: selected,
+            counterpartProgram: parentProgram,
+            counterpartRoleLabel: 'البرنامج التجاري المقابل',
+          }
+        : null;
+    }
+
+    return null;
+  }, [quickCompareProgramId, unifiedPrograms]);
+
+  const weeklyFeaturedAlternatives = useMemo(() => {
+    const preferredIds = ['ollama', 'bonsai-blenderbim', 'comfyui'];
+    const preferred = preferredIds
+      .map((id) => unifiedPrograms.find((p) => p.id === id))
+      .filter((p): p is NonNullable<typeof p> => Boolean(p));
+    if (preferred.length >= 3) return preferred.slice(0, 3);
+
+    return unifiedPrograms
+      .filter((p) => p.kind === 'alternative')
+      .sort((a, b) => b.likes - a.likes)
+      .slice(0, 3);
+  }, [unifiedPrograms]);
+
   const savedItems = useMemo(() => {
     const items: Array<{ software: SoftwareEntry; alternative: FreeAlternative }> = [];
     for (const sw of catalog) {
@@ -755,6 +826,7 @@ export default function App() {
                       onToggleCompare={handleToggleCompare}
                       onOpenProgramPage={openProgramPage}
                       onRateProgram={handleRateProgram}
+                      onQuickCompare={(id) => setQuickCompareProgramId(id)}
                     />
                   ))}
                 </div>
@@ -772,6 +844,7 @@ export default function App() {
                       onToggleCompare={handleToggleCompare}
                       onRateProgram={handleRateProgram}
                       onSelectSoftware={openProgramPage}
+                      onQuickCompare={(id) => setQuickCompareProgramId(id)}
                     />
                   ))}
                 </div>
@@ -795,33 +868,40 @@ export default function App() {
       </main>
 
       <footer className="border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-          <p>
-            بديلك — دليل عربي مفتوح للبدائل المجانية للبرامج الهندسية والتصميمية
-          </p>
-          <div className="flex items-center gap-6">
-            <a
-              href={BIM_ARABIA_CHANNEL_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-slate-900 dark:hover:text-white transition-colors"
-            >
-              قناة بيم أرابيا على يوتيوب
-            </a>
-            <button
-              type="button"
-              onClick={() => setIsToolkitOpen(true)}
-              className="hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
-            >
-              حقيبة أدواتي ({savedItems.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsAddModalOpen(true)}
-              className="hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
-            >
-              أضف برنامج أو شرح
-            </button>
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-8 space-y-6">
+          <FooterNewsletter
+            featuredAlternatives={weeklyFeaturedAlternatives}
+            onOpenProgramPage={openProgramPage}
+          />
+
+          <div className="pt-4 border-t border-slate-200/80 dark:border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+            <p>
+              بديلك — دليل عربي مفتوح للبدائل المجانية للبرامج الهندسية والتصميمية
+            </p>
+            <div className="flex items-center gap-6">
+              <a
+                href={BIM_ARABIA_CHANNEL_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-slate-900 dark:hover:text-white transition-colors"
+              >
+                قناة بيم أرابيا على يوتيوب
+              </a>
+              <button
+                type="button"
+                onClick={() => setIsToolkitOpen(true)}
+                className="hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+              >
+                حقيبة أدواتي ({savedItems.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsAddModalOpen(true)}
+                className="hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+              >
+                أضف برنامج أو شرح
+              </button>
+            </div>
           </div>
         </div>
       </footer>
@@ -889,6 +969,22 @@ export default function App() {
         onRemoveProgram={(programId) => handleToggleCompare(programId)}
         onClearAll={() => setCompareIds([])}
         onOpenProgramPage={openProgramPage}
+      />
+
+      <QuickCompareModal
+        isOpen={Boolean(quickComparePair)}
+        selectedProgram={quickComparePair?.selectedProgram ?? null}
+        counterpartProgram={quickComparePair?.counterpartProgram ?? null}
+        counterpartRoleLabel={quickComparePair?.counterpartRoleLabel ?? 'أفضل بديل مجاني'}
+        onClose={() => setQuickCompareProgramId(null)}
+        onOpenProgramPage={openProgramPage}
+        onOpenFullCompare={(leftId, rightId) => {
+          setCompareIds((prev) => {
+            const merged = [leftId, rightId, ...prev.filter((id) => id !== leftId && id !== rightId)];
+            return merged.slice(0, 5);
+          });
+          setIsCompareOpen(true);
+        }}
       />
     </div>
   );

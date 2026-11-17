@@ -2,6 +2,7 @@ import React from 'react';
 import { ArrowUpLeft, Youtube, ExternalLink, ArrowLeftRight, Github } from 'lucide-react';
 import { CATEGORIES } from '../data/catalog';
 import { UnifiedProgramItem } from '../types/software';
+import { useLongPress } from '../hooks/useLongPress';
 import { StarRating } from './StarRating';
 
 interface UnifiedProgramCardProps {
@@ -10,6 +11,7 @@ interface UnifiedProgramCardProps {
   onToggleCompare: (programId: string) => void;
   onOpenProgramPage: (programId: string) => void;
   onRateProgram: (programId: string, stars: number) => void;
+  onQuickCompare: (programId: string) => void;
 }
 
 export const UnifiedProgramCard: React.FC<UnifiedProgramCardProps> = ({
@@ -18,11 +20,24 @@ export const UnifiedProgramCard: React.FC<UnifiedProgramCardProps> = ({
   onToggleCompare,
   onOpenProgramPage,
   onRateProgram,
+  onQuickCompare,
 }) => {
   const categoryLabel = CATEGORIES.find((c) => c.id === item.category)?.label ?? item.category;
 
+  const { isPressing, longPressProps } = useLongPress({
+    onLongPress: () => onQuickCompare(item.id),
+  });
+
   return (
-    <article className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
+    <article
+      {...longPressProps}
+      title="اضغط مطولاً للمقارنة السريعة مع أفضل بديل مجاني"
+      className={`bg-white dark:bg-slate-900 border rounded-xl p-6 flex flex-col justify-between transition-all ${
+        isPressing
+          ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-600/40 scale-[0.99]'
+          : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+      }`}
+    >
       <div>
         <div className="flex items-start justify-between gap-4 mb-3">
           <div className="flex items-center gap-3.5 min-w-0">
@@ -168,6 +183,10 @@ export const UnifiedProgramCard: React.FC<UnifiedProgramCardProps> = ({
             <ArrowUpLeft className="w-3.5 h-3.5" />
           </a>
         </div>
+
+        <p className="text-[11px] text-slate-400 dark:text-slate-500">
+          اضغط مطولاً على البطاقة للمقارنة السريعة
+        </p>
       </div>
     </article>
   );
