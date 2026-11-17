@@ -1,0 +1,6 @@
+{
+  "name": "بديلك — دليل البرامج والبدائل المجانية",
+  "description": "دليل عربي على غرار AlternativeTo لاكتشاف أفضل البدائل المجانية ومفتوحة المصدر للبرامج الهندسية والتصميمية مع روابط شروحات قناة بيم أرابيا على يوتيوب.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
