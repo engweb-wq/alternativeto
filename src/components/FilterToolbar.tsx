@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Youtube, Sun, Moon, RotateCcw, SlidersHorizontal, ChevronDown, ChevronUp, ArrowLeftRight, Github } from 'lucide-react';
+import { Youtube, Sun, Moon, RotateCcw, SlidersHorizontal, ChevronDown, ChevronUp, ArrowLeftRight, Github, WifiOff, Cpu } from 'lucide-react';
 import { CATEGORIES, FEATURE_TAGS } from '../data/catalog';
 import {
   FeatureTag,
@@ -9,7 +9,7 @@ import {
 } from '../types/software';
 import { useLanguage } from '../i18n/LanguageContext';
 
-export type SortOption = 'popular' | 'highest-rated' | 'bim-first' | 'most-alternatives';
+export type SortOption = 'popular' | 'highest-rated' | 'bim-first' | 'most-alternatives' | 'lightest-ram';
 export type DirectoryViewMode = 'alternatives' | 'unified';
 
 interface FilterToolbarProps {
@@ -27,6 +27,12 @@ interface FilterToolbarProps {
   onToggleArabicOrigin: () => void;
   onlyGithub: boolean;
   onToggleGithub: () => void;
+  onlyOffline: boolean;
+  onToggleOffline: () => void;
+  onlyPortable: boolean;
+  onTogglePortable: () => void;
+  onlyLowSpec: boolean;
+  onToggleLowSpec: () => void;
   sortBy: SortOption;
   onSortChange: (sort: SortOption) => void;
   viewMode: DirectoryViewMode;
@@ -58,6 +64,12 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
   onToggleArabicOrigin,
   onlyGithub,
   onToggleGithub,
+  onlyOffline,
+  onToggleOffline,
+  onlyPortable,
+  onTogglePortable,
+  onlyLowSpec,
+  onToggleLowSpec,
   sortBy,
   onSortChange,
   viewMode,
@@ -194,8 +206,9 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
                   onChange={(e) => onSortChange(e.target.value as SortOption)}
                   className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-600"
                 >
-                  <option value="popular">{t('الأكثر تصويتاً', 'Most Popular')}</option>
-                  <option value="highest-rated">{t('الأعلى تقييماً بالنجوم', 'Highest Rated')}</option>
+                  <option value="popular">{t('الأكثر توصية من المجتمع', 'Most Recommended')}</option>
+                  <option value="highest-rated">{t('تقييمات المستخدمين المحلية', 'Local User Ratings')}</option>
+                  <option value="lightest-ram">{t('الأخف على ذاكرة RAM', 'Lightest RAM Usage')}</option>
                   <option value="bim-first">{t('شروحات بيم أرابيا أولاً', 'BIM Arabia First')}</option>
                   <option value="most-alternatives">{t('الأكثر بدائل متاحة', 'Most Alternatives')}</option>
                 </select>
@@ -266,31 +279,31 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
               </div>
             </div>
 
-            {/* Quick Content Filters: BIM Arabia, Arabic Origin, GitHub */}
+            {/* Quick Content, Privacy & Hardware Filters */}
             <div className="lg:col-span-4 space-y-1.5">
               <span className="block text-xs font-medium text-slate-500 dark:text-slate-400">
-                {t('فلاتر المحتوى والشروحات', 'Tutorials & Sources')}
+                {t('فلاتر الخصوصية والعتاد والمحتوى', 'Privacy, Portability & Sources')}
               </span>
-              <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-1.5">
                 <button
                   type="button"
                   aria-pressed={onlyBimTutorials}
                   onClick={onToggleBimTutorials}
-                  className={`flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  className={`inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                     onlyBimTutorials
                       ? 'bg-red-50 dark:bg-red-950/40 border-red-300 dark:border-red-800 text-red-700 dark:text-red-300'
                       : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
                   }`}
                 >
-                  <Youtube className="w-4 h-4 shrink-0" />
-                  <span>{t('شروحات بيم أرابيا', 'BIM Arabia')}</span>
+                  <Youtube className="w-3.5 h-3.5 shrink-0" />
+                  <span>{t('بيم أرابيا', 'BIM Arabia')}</span>
                 </button>
 
                 <button
                   type="button"
                   aria-pressed={onlyArabicOrigin}
                   onClick={onToggleArabicOrigin}
-                  className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  className={`inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                     onlyArabicOrigin
                       ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300'
                       : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
@@ -303,7 +316,7 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
                   type="button"
                   aria-pressed={onlyGithub}
                   onClick={onToggleGithub}
-                  className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  className={`inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                     onlyGithub
                       ? 'bg-slate-900 border-slate-900 text-white dark:bg-slate-100 dark:border-slate-100 dark:text-slate-900'
                       : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
@@ -311,6 +324,47 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
                 >
                   <Github className="w-3.5 h-3.5 shrink-0" />
                   <span>GitHub</span>
+                </button>
+
+                <button
+                  type="button"
+                  aria-pressed={onlyOffline}
+                  onClick={onToggleOffline}
+                  className={`inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                    onlyOffline
+                      ? 'bg-blue-700 border-blue-700 text-white'
+                      : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
+                  }`}
+                >
+                  <WifiOff className="w-3.5 h-3.5 shrink-0" />
+                  <span>{t('دون إنترنت', 'Offline')}</span>
+                </button>
+
+                <button
+                  type="button"
+                  aria-pressed={onlyPortable}
+                  onClick={onTogglePortable}
+                  className={`inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                    onlyPortable
+                      ? 'bg-blue-700 border-blue-700 text-white'
+                      : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
+                  }`}
+                >
+                  <span>{t('محمول Portable', 'Portable')}</span>
+                </button>
+
+                <button
+                  type="button"
+                  aria-pressed={onlyLowSpec}
+                  onClick={onToggleLowSpec}
+                  className={`inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                    onlyLowSpec
+                      ? 'bg-emerald-700 border-emerald-700 text-white'
+                      : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
+                  }`}
+                >
+                  <Cpu className="w-3.5 h-3.5 shrink-0" />
+                  <span>{t('للأجهزة الضعيفة', 'Low-Spec')}</span>
                 </button>
               </div>
             </div>

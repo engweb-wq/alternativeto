@@ -208,10 +208,16 @@ export const QuickCompareModal: React.FC<QuickCompareModalProps> = ({
                 >
                   {translateLicenseCategory(selectedProgram.licenseCategory)}
                 </span>
-                <span className="inline-flex items-center gap-1 text-slate-700 dark:text-slate-200 tabular-nums">
-                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
-                  <span>{selectedProgram.rating.toFixed(1)}</span>
-                </span>
+                {selectedProgram.ratingCount > 0 ? (
+                  <span className="inline-flex items-center gap-1 text-slate-700 dark:text-slate-200 tabular-nums">
+                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
+                    <span>{selectedProgram.rating.toFixed(1)}</span>
+                  </span>
+                ) : (
+                  <span className="font-mono text-slate-500 dark:text-slate-400 tabular-nums">
+                    RAM {selectedProgram.hardwareProfile.minRamGb}GB+
+                  </span>
+                )}
               </div>
             </div>
 
@@ -250,10 +256,20 @@ export const QuickCompareModal: React.FC<QuickCompareModalProps> = ({
                     ? translateLicenseCategory(counterpartProgram.licenseCategory)
                     : `${translateLicenseCategory(counterpartProgram.licenseCategory)} (0$)`}
                 </span>
-                <span className="inline-flex items-center gap-1 text-slate-700 dark:text-slate-200 tabular-nums">
-                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
-                  <span>{counterpartProgram.rating.toFixed(1)}</span>
-                </span>
+                {counterpartProgram.ratingCount > 0 ? (
+                  <span className="inline-flex items-center gap-1 text-slate-700 dark:text-slate-200 tabular-nums">
+                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
+                    <span>{counterpartProgram.rating.toFixed(1)}</span>
+                  </span>
+                ) : counterpartProgram.replacementAssessment ? (
+                  <span className="font-mono font-semibold text-blue-700 dark:text-blue-400 tabular-nums">
+                    ~{counterpartProgram.replacementAssessment.illustrativePercent}%
+                  </span>
+                ) : (
+                  <span className="font-mono text-slate-500 dark:text-slate-400 tabular-nums">
+                    RAM {counterpartProgram.hardwareProfile.minRamGb}GB+
+                  </span>
+                )}
               </div>
             </div>
           </div>

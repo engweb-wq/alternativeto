@@ -13,6 +13,11 @@ import { MORE_EXPANSION_CATALOG } from './catalogMoreExpansion';
 import { resolveProgramDownloadUrl } from './downloadLinks';
 import { resolveProgramGithubUrl } from './githubRepos';
 import { resolveBimArabiaTutorial } from './bimArabiaLinks';
+import {
+  resolveHardwareProfile,
+  resolveMaintenanceStatus,
+  resolveReplacementAssessment,
+} from './intelligenceData';
 
 export const BIM_ARABIA_CHANNEL_URL = 'https://www.youtube.com/@omar_selim1';
 export const BIM_ARABIA_BEST_ALTERNATIVES_URL =
@@ -1508,26 +1513,15 @@ export const INITIAL_SOFTWARE_CATALOG: SoftwareEntry[] = [
 ];
 
 export function getBaseRating(
-  id: string,
-  likes: number,
-  kind: 'commercial' | 'alternative',
-  isBestFree?: boolean
+  _id: string,
+  _likes: number,
+  _kind: 'commercial' | 'alternative',
+  _isBestFree?: boolean
 ): { rating: number; ratingCount: number } {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = (hash * 31 + id.charCodeAt(i)) % 1000;
-  }
-  const baseCount = Math.max(18, Math.round(likes / 6) + (hash % 25));
-  const baseScore =
-    kind === 'commercial'
-      ? 4.2 + (hash % 7) * 0.1
-      : isBestFree
-      ? 4.5 + (hash % 5) * 0.1
-      : 4.1 + (hash % 7) * 0.1;
-
+  // No synthetic/fabricated ratings: only real user-submitted reviews and ratings are counted.
   return {
-    rating: Number(Math.min(4.9, baseScore).toFixed(1)),
-    ratingCount: baseCount,
+    rating: 0,
+    ratingCount: 0,
   };
 }
 
@@ -1538,6 +1532,9 @@ export function applyUserRating(
 ): { average: number; count: number } {
   if (!userRating) {
     return { average: baseRating, count: baseCount };
+  }
+  if (baseCount === 0) {
+    return { average: Number(userRating.toFixed(1)), count: 1 };
   }
   const totalSum = baseRating * baseCount + userRating;
   const totalCount = baseCount + 1;
@@ -1556,6 +1553,13 @@ export function buildUnifiedProgramIndex(entries: SoftwareEntry[]): UnifiedProgr
     const baseCom = getBaseRating(entry.id, topLikes, 'commercial');
     const comRating = entry.rating ?? baseCom.rating;
     const comCount = entry.ratingCount ?? baseCom.ratingCount;
+    const comHw = resolveHardwareProfile({
+      id: entry.id,
+      category: entry.category,
+      platforms: entry.platforms,
+      licenseCategory: 'مدفوع',
+      features: entry.features,
+    });
 
     items.push({
       id: entry.id,
@@ -1585,6 +1589,11 @@ export function buildUnifiedProgramIndex(entries: SoftwareEntry[]): UnifiedProgr
       originLabel: entry.originLabel,
       bimArabiaTutorial: resolveBimArabiaTutorial(entry.id, entry.bimArabiaTutorial),
       commercialEntry: entry,
+      hardwareProfile: comHw,
+      offlineCapable: comHw.offlineCapable,
+      portableAvailable: comHw.portableAvailable,
+      lowSpecFriendly: comHw.lowSpecFriendly,
+      maintenanceStatus: resolveMaintenanceStatus(entry.id),
     });
 
     for (const alt of entry.alternatives) {
@@ -1594,6 +1603,13 @@ export function buildUnifiedProgramIndex(entries: SoftwareEntry[]): UnifiedProgr
       const baseAlt = getBaseRating(alt.id, alt.likes, 'alternative', alt.isBestFree);
       const altRating = alt.rating ?? baseAlt.rating;
       const altCount = alt.ratingCount ?? baseAlt.ratingCount;
+      const altHw = resolveHardwareProfile({
+        id: alt.id,
+        category: entry.category,
+        platforms: alt.platforms,
+        licenseCategory: alt.licenseCategory,
+        features: alt.features,
+      });
 
       items.push({
         id: alt.id,
@@ -1624,6 +1640,12 @@ export function buildUnifiedProgramIndex(entries: SoftwareEntry[]): UnifiedProgr
         bimArabiaTutorial: resolveBimArabiaTutorial(alt.id, alt.bimArabiaTutorial),
         parentCommercial: entry,
         alternativeEntry: alt,
+        replacementAssessment: resolveReplacementAssessment(alt, entry),
+        hardwareProfile: altHw,
+        offlineCapable: altHw.offlineCapable,
+        portableAvailable: altHw.portableAvailable,
+        lowSpecFriendly: altHw.lowSpecFriendly,
+        maintenanceStatus: resolveMaintenanceStatus(alt.id),
       });
     }
   }

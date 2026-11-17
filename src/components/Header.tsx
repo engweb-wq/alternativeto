@@ -1,14 +1,27 @@
 import React from 'react';
 import { Globe } from 'lucide-react';
+import { WorkspaceProductTab } from '../types/software';
 import { useLanguage } from '../i18n/LanguageContext';
 
 interface HeaderProps {
+  activeTab: WorkspaceProductTab;
+  onSelectTab: (tab: WorkspaceProductTab) => void;
   onOpenAddModal: () => void;
   onOpenToolkit: () => void;
   onNavigateHome: (sectionId?: string) => void;
 }
 
+const NAV_TABS: Array<{ id: WorkspaceProductTab; ar: string; en: string }> = [
+  { id: 'directory', ar: 'الدليل والمهام', en: 'Directory & Tasks' },
+  { id: 'stacks', ar: 'منظومات العمل', en: 'Workflow Stacks' },
+  { id: 'compatibility', ar: 'مختبر التوافق', en: 'Compatibility Lab' },
+  { id: 'migration', ar: 'مسارات الانتقال', en: 'Migration Plans' },
+  { id: 'hardware-github', ar: 'العتاد و GitHub', en: 'Hardware & GitHub' },
+];
+
 export const Header: React.FC<HeaderProps> = ({
+  activeTab,
+  onSelectTab,
   onOpenAddModal,
   onOpenToolkit,
   onNavigateHome,
@@ -23,6 +36,7 @@ export const Header: React.FC<HeaderProps> = ({
           href="#top"
           onClick={(e) => {
             e.preventDefault();
+            onSelectTab('directory');
             onNavigateHome('top');
           }}
           className="font-display text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 rounded"
@@ -30,52 +44,43 @@ export const Header: React.FC<HeaderProps> = ({
           {t('بديلك', 'Badeelak')}
         </a>
 
-        {/* Zone 2: 4 concise single-line navigation links */}
+        {/* Zone 2: 5 concise single-line workspace navigation links */}
         <nav
           aria-label={t('التنقل الرئيسي', 'Primary Navigation')}
-          className="hidden md:flex items-center gap-7 text-sm font-medium text-slate-600 dark:text-slate-300"
+          className="hidden lg:flex items-center gap-6 text-sm font-medium text-slate-600 dark:text-slate-300"
         >
-          <a
-            href="#directory"
-            onClick={(e) => {
-              e.preventDefault();
-              onNavigateHome('directory');
-            }}
-            className="hover:text-slate-900 dark:hover:text-white hover:underline underline-offset-8 decoration-blue-600 transition-colors whitespace-nowrap shrink-0"
-          >
-            {t('البحث المتقدم', 'Advanced Search')}
-          </a>
-          <a
-            href="#categories-directory"
-            onClick={(e) => {
-              e.preventDefault();
-              onNavigateHome('categories-directory');
-            }}
-            className="hover:text-slate-900 dark:hover:text-white hover:underline underline-offset-8 decoration-blue-600 transition-colors whitespace-nowrap shrink-0"
-          >
-            {t('دليل الفئات', 'Categories')}
-          </a>
-          <a
-            href="#bim-arabia"
-            onClick={(e) => {
-              e.preventDefault();
-              onNavigateHome('bim-arabia');
-            }}
-            className="hover:text-slate-900 dark:hover:text-white hover:underline underline-offset-8 decoration-blue-600 transition-colors whitespace-nowrap shrink-0"
-          >
-            {t('شروحات بيم أرابيا', 'BIM Arabia')}
-          </a>
+          {NAV_TABS.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => {
+                  onSelectTab(tab.id);
+                  onNavigateHome('top');
+                }}
+                className={`transition-colors whitespace-nowrap shrink-0 cursor-pointer underline-offset-8 ${
+                  isActive
+                    ? 'text-slate-900 dark:text-white font-bold underline decoration-2 decoration-blue-600'
+                    : 'hover:text-slate-900 dark:hover:text-white hover:underline decoration-blue-600'
+                }`}
+              >
+                {t(tab.ar, tab.en)}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Zone 3: Language Switcher + Toolkit trigger + Primary CTA */}
+        <div className="flex items-center gap-2.5 shrink-0">
           <button
             type="button"
             onClick={onOpenToolkit}
-            className="hover:text-slate-900 dark:hover:text-white hover:underline underline-offset-8 decoration-blue-600 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            className="hidden sm:inline-flex items-center px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white hover:underline underline-offset-4 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
           >
-            {t('حقيبة أدواتي', 'My Toolkit')}
+            {t('حقيبة المهندس', 'Engineer Toolkit')}
           </button>
-        </nav>
 
-        {/* Zone 3: Language Switcher + 1 primary CTA action */}
-        <div className="flex items-center gap-2.5 shrink-0">
           <button
             type="button"
             onClick={toggleLang}

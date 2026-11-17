@@ -28,6 +28,7 @@ export const UnifiedProgramCard: React.FC<UnifiedProgramCardProps> = ({
     translateCategory,
     translateFeature,
     translateLicenseCategory,
+    translateReplacementTier,
   } = useLanguage();
 
   const categoryLabel = translateCategory(item.category);
@@ -92,12 +93,24 @@ export const UnifiedProgramCard: React.FC<UnifiedProgramCardProps> = ({
           </span>
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500 dark:text-slate-400 mb-3">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500 dark:text-slate-400 mb-3 tabular-nums">
           <span>{categoryLabel}</span>
           <span aria-hidden="true">·</span>
           <span>{item.platforms.join(' / ')}</span>
           <span aria-hidden="true">·</span>
-          <span>{item.licenseLabel}</span>
+          <span>RAM {item.hardwareProfile.minRamGb}GB+</span>
+          {item.offlineCapable && (
+            <>
+              <span aria-hidden="true">·</span>
+              <span>{t('دون إنترنت', 'Offline')}</span>
+            </>
+          )}
+          {item.portableAvailable && (
+            <>
+              <span aria-hidden="true">·</span>
+              <span>Portable</span>
+            </>
+          )}
           {item.isArabicOrigin && (
             <>
               <span aria-hidden="true">·</span>
@@ -111,6 +124,26 @@ export const UnifiedProgramCard: React.FC<UnifiedProgramCardProps> = ({
         <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-3">
           {item.shortSummary}
         </p>
+
+        {item.replacementAssessment && (
+          <div className="mb-3 space-y-0.5 text-xs">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="font-semibold text-blue-700 dark:text-blue-400">
+                {translateReplacementTier(item.replacementAssessment.tier)}
+              </span>
+              <span className="font-mono font-bold text-slate-800 dark:text-slate-200 tabular-nums">
+                ~{item.replacementAssessment.illustrativePercent}%
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 dark:text-slate-500">
+              {t(
+                'توافق توضيحي عن',
+                'Illustrative coverage vs.'
+              )}{' '}
+              {item.replacementAssessment.targetCommercialName}
+            </p>
+          </div>
+        )}
 
         <div className="mb-3">
           <StarRating

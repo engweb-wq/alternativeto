@@ -114,10 +114,20 @@ export const CategoryDirectorySection: React.FC<CategoryDirectorySectionProps> =
                             <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
                               ·
                             </span>
-                            <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-600 dark:text-slate-300 tabular-nums">
-                              <Star className="w-3 h-3 fill-amber-400 text-amber-500" aria-hidden="true" />
-                              <span>{prog.rating.toFixed(1)}</span>
+                            <span className="text-xs font-mono text-slate-500 dark:text-slate-400 tabular-nums">
+                              {prog.hardwareProfile.minRamGb}GB+
                             </span>
+                            {prog.ratingCount > 0 && (
+                              <>
+                                <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
+                                  ·
+                                </span>
+                                <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-600 dark:text-slate-300 tabular-nums">
+                                  <Star className="w-3 h-3 fill-amber-400 text-amber-500" aria-hidden="true" />
+                                  <span>{prog.rating.toFixed(1)}</span>
+                                </span>
+                              </>
+                            )}
                             {prog.bimArabiaTutorial?.hasTutorial && (
                               <>
                                 <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">

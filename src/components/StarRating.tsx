@@ -81,12 +81,20 @@ export const StarRating: React.FC<StarRatingProps> = ({
         })}
       </div>
 
-      <span className="text-xs font-medium text-slate-700 dark:text-slate-200 tabular-nums">
-        {average.toFixed(1)}
-      </span>
-      <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-        ({count} {t('تقييم', count === 1 ? 'rating' : 'ratings')})
-      </span>
+      {count > 0 ? (
+        <>
+          <span className="text-xs font-medium text-slate-700 dark:text-slate-200 tabular-nums">
+            {average.toFixed(1)}
+          </span>
+          <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+            ({count} {t('تقييم', count === 1 ? 'rating' : 'ratings')})
+          </span>
+        </>
+      ) : (
+        <span className="text-xs text-slate-500 dark:text-slate-400">
+          {t('لم يقيّم محلياً بعد', 'No local ratings yet')}
+        </span>
+      )}
       {userRating && (
         <span className="text-xs font-medium text-blue-700 dark:text-blue-400 tabular-nums">
           · {t('تقييمك', 'Yours')} {userRating}/5

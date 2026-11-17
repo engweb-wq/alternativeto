@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Trash2, ExternalLink, Copy, Check, Youtube } from 'lucide-react';
+import { X, Trash2, ExternalLink, Copy, Check, Youtube, Milestone } from 'lucide-react';
 import { FreeAlternative, SoftwareEntry } from '../types/software';
 import { useLanguage } from '../i18n/LanguageContext';
 
@@ -14,6 +14,8 @@ interface ToolkitDrawerProps {
   savedItems: SavedItem[];
   onRemoveSaved: (altId: string) => void;
   onOpenSoftware: (softwareId: string) => void;
+  migrationCompletedCount?: number;
+  onOpenMigrationPaths?: () => void;
 }
 
 export const ToolkitDrawer: React.FC<ToolkitDrawerProps> = ({
@@ -22,6 +24,8 @@ export const ToolkitDrawer: React.FC<ToolkitDrawerProps> = ({
   savedItems,
   onRemoveSaved,
   onOpenSoftware,
+  migrationCompletedCount = 0,
+  onOpenMigrationPaths,
 }) => {
   const [copied, setCopied] = useState(false);
   const { t, translateLicenseType } = useLanguage();
@@ -30,7 +34,7 @@ export const ToolkitDrawer: React.FC<ToolkitDrawerProps> = ({
 
   const handleCopyMarkdown = async () => {
     const lines = [
-      t('# حقيبة أدواتي المجانية (من دليل بديلك)', '# My Free Toolkit (from Badeelak)'),
+      t('# حقيبة المهندس المجانية (من منصة بديلك)', '# Engineer Free Toolkit (from Badeelak)'),
       '',
       ...savedItems.map(({ software, alternative }) => {
         const tutUrl = alternative.bimArabiaTutorial?.url ?? software.bimArabiaTutorial?.url;
@@ -68,26 +72,53 @@ export const ToolkitDrawer: React.FC<ToolkitDrawerProps> = ({
               id="toolkit-drawer-title"
               className="font-display text-lg font-bold text-slate-900 dark:text-white"
             >
-              {t('حقيبة أدواتي المجانية', 'My Free Toolkit')} ({savedItems.length})
+              {t('حقيبة المهندس المجانية', 'Engineer Free Toolkit')} ({savedItems.length})
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
               {t(
-                'البدائل التي اخترتها لتجهيز جهازك دون اشتراكات',
-                'Free alternatives you saved to equip your workflow without subscriptions'
+                'البرامج ومنظومات العمل التي حفظتها لتجهيز جهازك دون اشتراكات',
+                'Tools and workflow stacks you saved to equip your machine without subscriptions'
               )}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label={t('إغلاق حقيبة الأدوات', 'Close My Toolkit')}
+            aria-label={t('إغلاق حقيبة المهندس', 'Close Engineer Toolkit')}
             className="p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-6 space-y-5">
+          {onOpenMigrationPaths && (
+            <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex items-center justify-between gap-3">
+              <div className="text-xs">
+                <p className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                  <Milestone className="w-3.5 h-3.5 text-blue-700 dark:text-blue-400" />
+                  <span>{t('تقدم مسارات الانتقال', 'Migration Plan Progress')}</span>
+                </p>
+                <p className="text-slate-500 dark:text-slate-400 tabular-nums mt-0.5">
+                  {t(
+                    `أنجزت ${migrationCompletedCount} خطوة تطبيقية`,
+                    `${migrationCompletedCount} practical steps completed`
+                  )}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenMigrationPaths();
+                }}
+                className="text-xs font-semibold text-blue-700 dark:text-blue-400 hover:underline cursor-pointer shrink-0"
+              >
+                {t('عرض الخطط', 'View Plans')}
+              </button>
+            </div>
+          )}
+
           {savedItems.length === 0 ? (
             <div className="py-12 text-center space-y-3">
               <p className="font-display text-base font-bold text-slate-800 dark:text-slate-200">
@@ -95,8 +126,8 @@ export const ToolkitDrawer: React.FC<ToolkitDrawerProps> = ({
               </p>
               <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
                 {t(
-                  'اضغط على زر "حفظ" بجانب أي بديل مجاني في الدليل لإضافته إلى قائمتك وتصديرها لاحقاً.',
-                  'Click "Save" next to any free alternative to add it to your personal list and export it anytime.'
+                  'احفظ أي بديل من الدليل أو احفظ منظومة عمل كاملة بضغطة واحدة من تبويب منظومات العمل.',
+                  'Save any alternative from the directory or add an entire workflow stack from the Workflow Stacks tab.'
                 )}
               </p>
             </div>

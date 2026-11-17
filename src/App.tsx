@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeftRight, RotateCcw, X } from 'lucide-react';
+import {
+  ArrowLeftRight,
+  BookOpen,
+  Compass,
+  Cpu,
+  Layers,
+  Milestone,
+  RotateCcw,
+  X,
+} from 'lucide-react';
 import {
   BIM_ARABIA_CHANNEL_URL,
   INITIAL_SOFTWARE_CATALOG,
@@ -10,6 +19,7 @@ import {
 import { resolveProgramDownloadUrl } from './data/downloadLinks';
 import { resolveProgramGithubUrl } from './data/githubRepos';
 import { resolveBimArabiaTutorial } from './data/bimArabiaLinks';
+import { resolveHardwareProfile } from './data/intelligenceData';
 import { getSimilarPrograms } from './utils/recommendations';
 import {
   BimArabiaTutorial,
@@ -20,9 +30,16 @@ import {
   ProgramReview,
   SoftwareCategory,
   SoftwareEntry,
+  WorkspaceProductTab,
 } from './types/software';
 import { Header } from './components/Header';
 import { HeroSection } from './components/HeroSection';
+import { TaskFinderSection } from './components/TaskFinderSection';
+import { WorkflowStacksView } from './components/WorkflowStacksView';
+import { CompatibilityLabView } from './components/CompatibilityLabView';
+import { MigrationPathsView } from './components/MigrationPathsView';
+import { HardwareAndGithubView } from './components/HardwareAndGithubView';
+import { AcademyView } from './components/AcademyView';
 import { DirectoryViewMode, FilterToolbar, SortOption } from './components/FilterToolbar';
 import { SoftwareCard } from './components/SoftwareCard';
 import { UnifiedProgramCard } from './components/UnifiedProgramCard';
@@ -46,8 +63,23 @@ const STORAGE_KEYS = {
   CUSTOM_ALTS: 'badeelak_custom_alts_v2',
   CUSTOM_BIM_LINKS: 'badeelak_custom_bim_v1',
   DOWNLOAD_URLS: 'badeelak_program_downloads_v1',
+  MIGRATION_PROGRESS: 'badeelak_migration_progress_v1',
   THEME: 'badeelak_theme_v1',
 };
+
+const WORKSPACE_PRODUCTS: Array<{
+  id: WorkspaceProductTab;
+  ar: string;
+  en: string;
+  icon: typeof Compass;
+}> = [
+  { id: 'directory', ar: '1. دليل المهام والبرامج', en: '1. Tasks & Directory', icon: Compass },
+  { id: 'stacks', ar: '2. منظومات العمل (7)', en: '2. Workflow Stacks (7)', icon: Layers },
+  { id: 'compatibility', ar: '3. مختبر التوافق والمقارنة', en: '3. Compatibility Lab', icon: ArrowLeftRight },
+  { id: 'migration', ar: '4. مسارات الانتقال', en: '4. Migration Plans', icon: Milestone },
+  { id: 'hardware-github', ar: '5. العتاد و GitHub', en: '5. Hardware & GitHub', icon: Cpu },
+  { id: 'academy', ar: '6. أكاديمية التعلم', en: '6. Learning Academy', icon: BookOpen },
+];
 
 function loadJson<T>(key: string, fallback: T): T {
   try {
@@ -103,6 +135,13 @@ function AppContent() {
     return false;
   });
 
+  // Active Workspace Product Tab + Practical Filters
+  const [activeWorkspaceTab, setActiveWorkspaceTab] = useState<WorkspaceProductTab>('directory');
+  const [compatibilityFlowId, setCompatibilityFlowId] = useState<string | null>(null);
+  const [migrationCompletedSteps, setMigrationCompletedSteps] = useState<Record<string, boolean>>(
+    () => loadJson<Record<string, boolean>>(STORAGE_KEYS.MIGRATION_PROGRESS, {})
+  );
+
   // Advanced Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<SoftwareCategory | 'all'>('all');
@@ -112,6 +151,9 @@ function AppContent() {
   const [onlyBimTutorials, setOnlyBimTutorials] = useState(false);
   const [onlyArabicOrigin, setOnlyArabicOrigin] = useState(false);
   const [onlyGithub, setOnlyGithub] = useState(false);
+  const [onlyOffline, setOnlyOffline] = useState(false);
+  const [onlyPortable, setOnlyPortable] = useState(false);
+  const [onlyLowSpec, setOnlyLowSpec] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>('popular');
   const [viewMode, setViewMode] = useState<DirectoryViewMode>('alternatives');
 
@@ -193,6 +235,10 @@ function AppContent() {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.DOWNLOAD_URLS, JSON.stringify(customDownloadsByProgram));
   }, [customDownloadsByProgram]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.MIGRATION_PROGRESS, JSON.stringify(migrationCompletedSteps));
+  }, [migrationCompletedSteps]);
 
   const likedAltSet = useMemo(() => new Set(likedIds), [likedIds]);
   const savedAltSet = useMemo(() => new Set(savedIds), [savedIds]);
@@ -316,6 +362,30 @@ function AppContent() {
         return false;
       }
 
+      if (onlyOffline) {
+        const entryHw = resolveHardwareProfile(entry);
+        const anyAltOffline = entry.alternatives.some(
+          (a) => resolveHardwareProfile({ ...a, category: entry.category }).offlineCapable
+        );
+        if (!entryHw.offlineCapable && !anyAltOffline) return false;
+      }
+
+      if (onlyPortable) {
+        const entryHw = resolveHardwareProfile(entry);
+        const anyAltPortable = entry.alternatives.some(
+          (a) => resolveHardwareProfile({ ...a, category: entry.category }).portableAvailable
+        );
+        if (!entryHw.portableAvailable && !anyAltPortable) return false;
+      }
+
+      if (onlyLowSpec) {
+        const entryHw = resolveHardwareProfile(entry);
+        const anyAltLowSpec = entry.alternatives.some(
+          (a) => resolveHardwareProfile({ ...a, category: entry.category }).lowSpecFriendly
+        );
+        if (!entryHw.lowSpecFriendly && !anyAltLowSpec) return false;
+      }
+
       if (selectedOSList.length > 0) {
         const matchesOS = selectedOSList.every(
           (os) =>
@@ -364,6 +434,17 @@ function AppContent() {
         const bTopRating = Math.max(...b.alternatives.map((x) => x.rating ?? 0), 0);
         if (bTopRating !== aTopRating) return bTopRating - aTopRating;
       }
+      if (sortBy === 'lightest-ram') {
+        const aMinRam = Math.min(
+          ...a.alternatives.map((x) => resolveHardwareProfile({ ...x, category: a.category }).minRamGb),
+          16
+        );
+        const bMinRam = Math.min(
+          ...b.alternatives.map((x) => resolveHardwareProfile({ ...x, category: b.category }).minRamGb),
+          16
+        );
+        if (aMinRam !== bMinRam) return aMinRam - bMinRam;
+      }
       if (sortBy === 'bim-first') {
         const aHas =
           Boolean(a.bimArabiaTutorial?.hasTutorial) ||
@@ -392,6 +473,9 @@ function AppContent() {
     onlyBimTutorials,
     onlyArabicOrigin,
     onlyGithub,
+    onlyOffline,
+    onlyPortable,
+    onlyLowSpec,
     sortBy,
   ]);
 
@@ -420,6 +504,18 @@ function AppContent() {
         return false;
       }
 
+      if (onlyOffline && !prog.offlineCapable) {
+        return false;
+      }
+
+      if (onlyPortable && !prog.portableAvailable) {
+        return false;
+      }
+
+      if (onlyLowSpec && !prog.lowSpecFriendly) {
+        return false;
+      }
+
       if (selectedOSList.length > 0 && !selectedOSList.every((os) => prog.platforms.includes(os))) {
         return false;
       }
@@ -445,6 +541,11 @@ function AppContent() {
       if (sortBy === 'highest-rated') {
         if (b.rating !== a.rating) return b.rating - a.rating;
       }
+      if (sortBy === 'lightest-ram') {
+        if (a.hardwareProfile.minRamGb !== b.hardwareProfile.minRamGb) {
+          return a.hardwareProfile.minRamGb - b.hardwareProfile.minRamGb;
+        }
+      }
       if (sortBy === 'bim-first') {
         const aHas = Boolean(a.bimArabiaTutorial?.hasTutorial);
         const bHas = Boolean(b.bimArabiaTutorial?.hasTutorial);
@@ -462,6 +563,9 @@ function AppContent() {
     onlyBimTutorials,
     onlyArabicOrigin,
     onlyGithub,
+    onlyOffline,
+    onlyPortable,
+    onlyLowSpec,
     sortBy,
   ]);
 
@@ -563,7 +667,10 @@ function AppContent() {
     selectedFeatures.length > 0 ||
     onlyBimTutorials ||
     onlyArabicOrigin ||
-    onlyGithub;
+    onlyGithub ||
+    onlyOffline ||
+    onlyPortable ||
+    onlyLowSpec;
 
   const handleResetFilters = () => {
     setSearchQuery('');
@@ -574,6 +681,9 @@ function AppContent() {
     setOnlyBimTutorials(false);
     setOnlyArabicOrigin(false);
     setOnlyGithub(false);
+    setOnlyOffline(false);
+    setOnlyPortable(false);
+    setOnlyLowSpec(false);
     setSortBy('popular');
   };
 
@@ -608,6 +718,35 @@ function AppContent() {
     );
   };
 
+  const handleSaveMultiple = (programIds: string[]) => {
+    setSavedIds((prev) => {
+      const next = new Set(prev);
+      for (const id of programIds) {
+        next.add(id);
+      }
+      return Array.from(next);
+    });
+  };
+
+  const handleToggleMigrationStep = (stepKey: string) => {
+    setMigrationCompletedSteps((prev) => ({
+      ...prev,
+      [stepKey]: !prev[stepKey],
+    }));
+  };
+
+  const handleResetMigrationPath = (pathId: string) => {
+    setMigrationCompletedSteps((prev) => {
+      const next = { ...prev };
+      for (const key of Object.keys(next)) {
+        if (key.startsWith(`${pathId}-`)) {
+          delete next[key];
+        }
+      }
+      return next;
+    });
+  };
+
   const handleToggleCompare = (programId: string) => {
     setCompareIds((prev) => {
       if (prev.includes(programId)) {
@@ -618,6 +757,11 @@ function AppContent() {
       }
       return [...prev, programId];
     });
+  };
+
+  const handleLaunchPresetCompare = (programIds: string[]) => {
+    setCompareIds(programIds.slice(0, 5));
+    setIsCompareOpen(true);
   };
 
   const handleRateProgram = (programId: string, stars: number) => {
@@ -716,13 +860,53 @@ function AppContent() {
   const displayedCount =
     viewMode === 'unified' ? filteredUnifiedPrograms.length : filteredCatalog.length;
 
+  const migrationCompletedCount = useMemo(
+    () => Object.values(migrationCompletedSteps).filter(Boolean).length,
+    [migrationCompletedSteps]
+  );
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       <Header
+        activeTab={activeWorkspaceTab}
+        onSelectTab={(tab) => {
+          closeProgramPage();
+          setActiveWorkspaceTab(tab);
+        }}
         onOpenAddModal={() => setIsAddModalOpen(true)}
         onOpenToolkit={() => setIsToolkitOpen(true)}
         onNavigateHome={handleNavigateHome}
       />
+
+      {/* Unified 6-Product Workspace Bar (Accessible across Desktop & Mobile) */}
+      {!activeProgram && (
+        <nav
+          aria-label={t('منتجات منصة بديلك', 'Badeelak Workspace Products')}
+          className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950"
+        >
+          <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-2.5 flex items-center gap-2 overflow-x-auto">
+            {WORKSPACE_PRODUCTS.map((prod) => {
+              const Icon = prod.icon;
+              const active = activeWorkspaceTab === prod.id;
+              return (
+                <button
+                  key={prod.id}
+                  type="button"
+                  onClick={() => setActiveWorkspaceTab(prod.id)}
+                  className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                    active
+                      ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900'
+                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-900'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  <span>{t(prod.ar, prod.en)}</span>
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+      )}
 
       <main className="flex-1">
         {activeProgram ? (
@@ -744,6 +928,57 @@ function AppContent() {
             onAddAlternativeToSoftware={handleAddAlternativeToSoftware}
             onAttachBimTutorial={handleAttachBimTutorial}
             onUpdateDownloadUrl={handleUpdateDownloadUrl}
+            onOpenMigrationPaths={() => {
+              closeProgramPage();
+              setActiveWorkspaceTab('migration');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
+        ) : activeWorkspaceTab === 'stacks' ? (
+          <WorkflowStacksView
+            programs={unifiedPrograms}
+            savedIds={savedAltSet}
+            onOpenProgramPage={openProgramPage}
+            onSaveMultiple={handleSaveMultiple}
+            onOpenCompatibilityLab={() => {
+              setActiveWorkspaceTab('compatibility');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
+        ) : activeWorkspaceTab === 'compatibility' ? (
+          <CompatibilityLabView
+            programs={unifiedPrograms}
+            initialFlowId={compatibilityFlowId}
+            onOpenProgramPage={openProgramPage}
+            onLaunchPresetCompare={handleLaunchPresetCompare}
+          />
+        ) : activeWorkspaceTab === 'migration' ? (
+          <MigrationPathsView
+            completedSteps={migrationCompletedSteps}
+            onToggleStep={handleToggleMigrationStep}
+            onResetPathSteps={handleResetMigrationPath}
+            onOpenProgramPage={openProgramPage}
+          />
+        ) : activeWorkspaceTab === 'hardware-github' ? (
+          <HardwareAndGithubView
+            programs={unifiedPrograms}
+            onOpenProgramPage={openProgramPage}
+          />
+        ) : activeWorkspaceTab === 'academy' ? (
+          <AcademyView
+            onOpenProgramPage={openProgramPage}
+            onOpenBimFilteredDirectory={() => {
+              setActiveWorkspaceTab('directory');
+              setOnlyBimTutorials(true);
+              setSelectedCategory('all');
+              setTimeout(() => {
+                document.getElementById('directory')?.scrollIntoView({ behavior: 'smooth' });
+              }, 60);
+            }}
+            onOpenMigrationPaths={() => {
+              setActiveWorkspaceTab('migration');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
           />
         ) : (
           <>
@@ -762,6 +997,23 @@ function AppContent() {
               }}
             />
 
+            <TaskFinderSection
+              programs={unifiedPrograms}
+              savedIds={savedAltSet}
+              onOpenProgramPage={openProgramPage}
+              onFilterByTask={({ searchKeyword, category }) => {
+                setSearchQuery(searchKeyword);
+                setSelectedCategory(category);
+                document.getElementById('directory')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              onOpenInCompatibilityLab={(flowId) => {
+                setCompatibilityFlowId(flowId);
+                setActiveWorkspaceTab('compatibility');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              onToggleSave={handleToggleSave}
+            />
+
             <FilterToolbar
               selectedCategory={selectedCategory}
               onCategoryChange={setSelectedCategory}
@@ -777,6 +1029,12 @@ function AppContent() {
               onToggleArabicOrigin={() => setOnlyArabicOrigin((v) => !v)}
               onlyGithub={onlyGithub}
               onToggleGithub={() => setOnlyGithub((v) => !v)}
+              onlyOffline={onlyOffline}
+              onToggleOffline={() => setOnlyOffline((v) => !v)}
+              onlyPortable={onlyPortable}
+              onTogglePortable={() => setOnlyPortable((v) => !v)}
+              onlyLowSpec={onlyLowSpec}
+              onToggleLowSpec={() => setOnlyLowSpec((v) => !v)}
               sortBy={sortBy}
               onSortChange={setSortBy}
               viewMode={viewMode}
@@ -969,6 +1227,12 @@ function AppContent() {
         savedItems={savedItems}
         onRemoveSaved={(altId) => handleToggleSave(altId)}
         onOpenSoftware={(softwareId) => openProgramPage(softwareId)}
+        migrationCompletedCount={migrationCompletedCount}
+        onOpenMigrationPaths={() => {
+          closeProgramPage();
+          setActiveWorkspaceTab('migration');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
       />
 
       <CompareModal
@@ -980,6 +1244,7 @@ function AppContent() {
         allPrograms={unifiedPrograms}
         onAddProgram={(programId) => handleToggleCompare(programId)}
         onRemoveProgram={(programId) => handleToggleCompare(programId)}
+        onSetPreset={(programIds) => setCompareIds(programIds.slice(0, 5))}
         onClearAll={() => setCompareIds([])}
         onOpenProgramPage={openProgramPage}
       />

@@ -216,22 +216,22 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           <div className="lg:col-span-7 flex flex-col justify-center">
             <p className="text-xs font-medium text-blue-700 dark:text-blue-400 mb-3">
               {t(
-                'دليل البرامج الهندسية والتصميمية والذكاء الاصطناعي · بدائل مجانية ومفتوحة المصدر',
-                'Engineering, AI & Creative Software Directory · Free & Open-Source Alternatives'
+                'بديلك — منظومة استخبارات البرامج الهندسية · BIM · CAD · الذكاء الاصطناعي',
+                'Badeelak — Engineering Software Intelligence · BIM · CAD · AI'
               )}
             </p>
 
             <h1 className="font-display text-3xl sm:text-4xl lg:text-[2.75rem] font-extrabold text-slate-900 dark:text-white leading-[1.2] text-balance mb-4">
               {t(
-                'ابحث عن أي برنامج مدفوع واكتشف أفضل بديل مجاني له',
-                'Find the best free & open-source alternative to any paid software'
+                'استبدل البرامج الهندسية المدفوعة بمنظومات عمل مجانية موثقة',
+                'Replace Paid Engineering Software with Verified Free Workflows'
               )}
             </h1>
 
             <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl mb-7">
               {t(
-                'موسوعة عربية على غرار AlternativeTo تقارن البرامج التجارية بأقوى البدائل المجانية ومفتوحة المصدر، مع ربط مباشر بالشروحات العملية على قناة بيم أرابيا للمهندس عمر سليم.',
-                'A curated directory inspired by AlternativeTo comparing commercial tools with top free & open-source alternatives, paired with BIM Arabia tutorials by Eng. Omar Selim.'
+                'اكتشف البدائل حسب المهمة، قيّم هل تستغني فعلياً عن البرنامج المدفوع، اختبر التوافق بين الصيغ، اتبع خطط انتقال أسبوعية، وتحقق من متطلبات العتاد ومشاريع GitHub النشطة.',
+                'Discover tools by engineering task, evaluate realistic replacement readiness, test cross-format compatibility, follow weekly migration paths, and match your PC hardware.'
               )}
             </p>
 
@@ -375,33 +375,42 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
                                     <div className="mt-1 flex items-center flex-wrap gap-1.5 text-[11px]">
                                       <span
-                                        className={`px-1.5 py-0.5 rounded font-medium ${
+                                        className={`font-semibold ${
                                           isCommercial
-                                            ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60'
-                                            : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60'
+                                            ? 'text-amber-700 dark:text-amber-400'
+                                            : 'text-emerald-700 dark:text-emerald-400'
                                         }`}
                                       >
                                         {isAr ? item.licenseLabel : translateLicenseCategory(item.licenseCategory)}
                                       </span>
 
                                       {item.alternativeEntry?.isBestFree && (
-                                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 font-semibold">
-                                          <Sparkles className="w-3 h-3" />
-                                          <span>{t('أفضل بديل', 'Best Alternative')}</span>
-                                        </span>
+                                        <>
+                                          <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
+                                          <span className="inline-flex items-center gap-0.5 text-blue-700 dark:text-blue-400 font-semibold">
+                                            <Sparkles className="w-3 h-3" />
+                                            <span>{t('أفضل بديل', 'Best Alternative')}</span>
+                                          </span>
+                                        </>
                                       )}
 
                                       {item.bimArabiaTutorial?.hasTutorial && (
-                                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 font-medium">
-                                          <Youtube className="w-3 h-3" />
-                                          <span>{t('بيم أرابيا', 'BIM Arabia')}</span>
-                                        </span>
+                                        <>
+                                          <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
+                                          <span className="inline-flex items-center gap-0.5 text-red-700 dark:text-red-400 font-medium">
+                                            <Youtube className="w-3 h-3" />
+                                            <span>{t('بيم أرابيا', 'BIM Arabia')}</span>
+                                          </span>
+                                        </>
                                       )}
 
                                       {!isCommercial && item.parentCommercial && (
-                                        <span className="text-slate-500 dark:text-slate-400 truncate">
-                                          {t('بديل لـ', 'Alternative to')} {item.parentCommercial.name}
-                                        </span>
+                                        <>
+                                          <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
+                                          <span className="text-slate-500 dark:text-slate-400 truncate">
+                                            {t('بديل لـ', 'Alternative to')} {item.parentCommercial.name}
+                                          </span>
+                                        </>
                                       )}
                                     </div>
                                   </div>

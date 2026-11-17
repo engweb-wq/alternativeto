@@ -20,11 +20,18 @@ interface CompareModalProps {
   allPrograms: UnifiedProgramItem[];
   onAddProgram: (programId: string) => void;
   onRemoveProgram: (programId: string) => void;
+  onSetPreset?: (programIds: string[]) => void;
   onClearAll: () => void;
   onOpenProgramPage: (programId: string) => void;
 }
 
 const ALL_OS: OperatingSystem[] = ['Windows', 'macOS', 'Linux', 'Web'];
+
+const QUICK_COMPARE_PRESETS = [
+  { labelAr: 'BIM: Revit × Bonsai × FreeCAD', labelEn: 'BIM: Revit × Bonsai × FreeCAD', ids: ['autodesk-revit', 'bonsai-blenderbim', 'freecad-bim'] },
+  { labelAr: '2D CAD: AutoCAD × LibreCAD × nanoCAD', labelEn: '2D CAD: AutoCAD × LibreCAD × nanoCAD', ids: ['autocad', 'librecad', 'nanocad-free'] },
+  { labelAr: 'AI: ChatGPT × Ollama × Open WebUI', labelEn: 'AI: ChatGPT × Ollama × Open WebUI', ids: ['chatgpt-plus', 'ollama', 'open-webui'] },
+];
 
 export const CompareModal: React.FC<CompareModalProps> = ({
   isOpen,
@@ -33,6 +40,7 @@ export const CompareModal: React.FC<CompareModalProps> = ({
   allPrograms,
   onAddProgram,
   onRemoveProgram,
+  onSetPreset,
   onClearAll,
   onOpenProgramPage,
 }) => {
@@ -44,6 +52,8 @@ export const CompareModal: React.FC<CompareModalProps> = ({
     translateFeature,
     translateLicenseCategory,
     translateArabicSupport,
+    translateReplacementTier,
+    translateGpuTier,
   } = useLanguage();
 
   const availableToAdd = useMemo(
@@ -76,7 +86,9 @@ export const CompareModal: React.FC<CompareModalProps> = ({
     }
 
     const licenses = new Set(selectedPrograms.map((p) => p.licenseCategory));
-    const ratings = new Set(selectedPrograms.map((p) => p.rating.toFixed(1)));
+    const ratings = new Set(
+      selectedPrograms.map((p) => (p.ratingCount > 0 ? p.rating.toFixed(1) : 'unrated'))
+    );
     const osSignatures = new Set(selectedPrograms.map((p) => [...p.platforms].sort().join(',')));
     const arabicSet = new Set(selectedPrograms.map((p) => p.arabicSupport));
     const bimSet = new Set(selectedPrograms.map((p) => Boolean(p.bimArabiaTutorial?.hasTutorial)));
@@ -99,10 +111,14 @@ export const CompareModal: React.FC<CompareModalProps> = ({
     };
   }, [selectedPrograms, unionFeatures]);
 
-  // Highest rating among selected
-  const maxRating = useMemo(
-    () => (selectedPrograms.length > 0 ? Math.max(...selectedPrograms.map((p) => p.rating)) : 0),
+  // Highest rating among selected locally-rated programs
+  const ratedSelected = useMemo(
+    () => selectedPrograms.filter((p) => p.ratingCount > 0),
     [selectedPrograms]
+  );
+  const maxRating = useMemo(
+    () => (ratedSelected.length > 0 ? Math.max(...ratedSelected.map((p) => p.rating)) : 0),
+    [ratedSelected]
   );
 
   // Automatic concise differences summary
@@ -125,12 +141,12 @@ export const CompareModal: React.FC<CompareModalProps> = ({
       );
     }
 
-    if (diffFlags.ratingDiffers) {
-      const topRated = selectedPrograms.filter((p) => p.rating === maxRating);
+    if (ratedSelected.length > 0 && diffFlags.ratingDiffers) {
+      const topRated = ratedSelected.filter((p) => p.rating === maxRating);
       points.push(
         t(
-          `الأعلى تقييماً: ${topRated.map((p) => p.name).join(' و ')} بمتوسط ${maxRating.toFixed(1)} من 5 نجوم.`,
-          `Highest rated: ${topRated.map((p) => p.name).join(', ')} with ${maxRating.toFixed(1)} / 5 stars.`
+          `الأعلى تقييماً محلياً: ${topRated.map((p) => p.name).join(' و ')} بمتوسط ${maxRating.toFixed(1)} من 5 نجوم.`,
+          `Highest locally rated: ${topRated.map((p) => p.name).join(', ')} with ${maxRating.toFixed(1)} / 5 stars.`
         )
       );
     }
@@ -248,36 +264,56 @@ export const CompareModal: React.FC<CompareModalProps> = ({
         </div>
 
         <div className="p-6 space-y-6">
-          {/* Quick Program Adder */}
-          {availableToAdd.length > 0 && selectedPrograms.length < 5 && (
-            <div className="flex flex-wrap items-center gap-3 p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
-              <label htmlFor="compare-picker" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                {t('أضف برنامجاً للمقارنة:', 'Add a program to compare:')}
-              </label>
-              <select
-                id="compare-picker"
-                value={pickerId}
-                onChange={(e) => setPickerId(e.target.value)}
-                className="flex-1 min-w-[220px] px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs sm:text-sm text-slate-800 dark:text-slate-100"
-              >
-                <option value="">{t('اختر برنامجاً من الدليل...', 'Select a program from directory...')}</option>
-                {availableToAdd.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} ({translateLicenseCategory(p.licenseCategory)})
-                  </option>
+          {/* Quick 3-Way Comparison Presets + Program Adder */}
+          <div className="space-y-3">
+            {onSetPreset && (
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <span className="font-semibold text-slate-500 dark:text-slate-400">
+                  {t('مقارنات ثلاثية جاهزة:', 'Quick 3-Program Presets:')}
+                </span>
+                {QUICK_COMPARE_PRESETS.map((preset) => (
+                  <button
+                    key={preset.labelEn}
+                    type="button"
+                    onClick={() => onSetPreset(preset.ids)}
+                    className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 hover:border-blue-600 text-slate-700 dark:text-slate-200 font-medium cursor-pointer"
+                  >
+                    {t(preset.labelAr, preset.labelEn)}
+                  </button>
                 ))}
-              </select>
-              <button
-                type="button"
-                onClick={handleAddFromPicker}
-                disabled={!pickerId}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 disabled:opacity-40 text-white text-xs font-semibold transition-colors cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                <span>{t('إضافة للجدول', 'Add to Table')}</span>
-              </button>
-            </div>
-          )}
+              </div>
+            )}
+
+            {availableToAdd.length > 0 && selectedPrograms.length < 5 && (
+              <div className="flex flex-wrap items-center gap-3 p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+                <label htmlFor="compare-picker" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  {t('أضف برنامجاً للمقارنة:', 'Add a program to compare:')}
+                </label>
+                <select
+                  id="compare-picker"
+                  value={pickerId}
+                  onChange={(e) => setPickerId(e.target.value)}
+                  className="flex-1 min-w-[220px] px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs sm:text-sm text-slate-800 dark:text-slate-100"
+                >
+                  <option value="">{t('اختر برنامجاً من الدليل...', 'Select a program from directory...')}</option>
+                  {availableToAdd.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} ({translateLicenseCategory(p.licenseCategory)})
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={handleAddFromPicker}
+                  disabled={!pickerId}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 disabled:opacity-40 text-white text-xs font-semibold transition-colors cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>{t('إضافة للجدول', 'Add to Table')}</span>
+                </button>
+              </div>
+            )}
+          </div>
 
           {selectedPrograms.length < 2 ? (
             <div className="py-12 text-center space-y-2 border border-dashed border-slate-300 dark:border-slate-700 rounded-xl">
@@ -402,40 +438,99 @@ export const CompareModal: React.FC<CompareModalProps> = ({
                       </tr>
                     )}
 
+                    {/* Replacement Readiness Tier Row */}
+                    <tr>
+                      <td className="py-3.5 px-4 font-semibold text-slate-800 dark:text-slate-200">
+                        <div>{t('جاهزية الاستبدال', 'Replacement Readiness')}</div>
+                        <span className="text-[11px] font-normal text-slate-500 dark:text-slate-400">
+                          {t('تقدير توضيحي للبدائل', 'Illustrative for alternatives')}
+                        </span>
+                      </td>
+                      {selectedPrograms.map((prog) => (
+                        <td
+                          key={prog.id}
+                          className="py-3.5 px-4 border-s border-slate-100 dark:border-slate-800 text-xs"
+                        >
+                          {prog.replacementAssessment ? (
+                            <div className="space-y-0.5">
+                              <span className="font-semibold text-blue-700 dark:text-blue-400 block">
+                                {translateReplacementTier(prog.replacementAssessment.tier)}
+                              </span>
+                              <span className="font-mono text-slate-500 dark:text-slate-400 tabular-nums">
+                                ~{prog.replacementAssessment.illustrativePercent}%
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-slate-500 dark:text-slate-400">
+                              {t('برنامج مرجعي تجاري', 'Commercial reference')}
+                            </span>
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+
+                    {/* Hardware & Portability Row */}
+                    <tr>
+                      <td className="py-3.5 px-4 font-semibold text-slate-800 dark:text-slate-200">
+                        {t('متطلبات العتاد والعمل', 'Hardware & Runtime')}
+                      </td>
+                      {selectedPrograms.map((prog) => (
+                        <td
+                          key={prog.id}
+                          className="py-3.5 px-4 border-s border-slate-100 dark:border-slate-800 text-xs space-y-0.5 tabular-nums"
+                        >
+                          <span className="font-mono font-semibold text-slate-800 dark:text-slate-200 block">
+                            RAM {prog.hardwareProfile.minRamGb}GB / {prog.hardwareProfile.recRamGb}GB ({prog.hardwareProfile.actualRamUsage})
+                          </span>
+                          <span className="text-slate-500 dark:text-slate-400 block">
+                            {translateGpuTier(prog.hardwareProfile.gpuTier)}
+                          </span>
+                          <span className="text-slate-500 dark:text-slate-400 block">
+                            {prog.offlineCapable ? t('دون إنترنت', 'Offline') : t('سحابي', 'Cloud')}
+                            {prog.portableAvailable ? ' · Portable' : ''}
+                          </span>
+                        </td>
+                      ))}
+                    </tr>
+
                     {/* Star Rating Row */}
                     {(!onlyDifferences || diffFlags.ratingDiffers) && (
                       <tr>
                         <td className="py-3.5 px-4 font-semibold text-slate-800 dark:text-slate-200">
-                          <div>{t('التقييم', 'User Rating')}</div>
-                          {diffFlags.ratingDiffers && (
-                            <span className="text-[11px] font-medium text-amber-700 dark:text-amber-400">
-                              {t('يوجد فرق', 'Differs')}
-                            </span>
-                          )}
+                          <div>{t('تقييم المستخدمين المحلي', 'Local User Rating')}</div>
                         </td>
                         {selectedPrograms.map((prog) => {
-                          const isTop = diffFlags.ratingDiffers && prog.rating === maxRating;
+                          const hasLocal = prog.ratingCount > 0;
+                          const isTop = hasLocal && diffFlags.ratingDiffers && prog.rating === maxRating;
                           return (
                             <td
                               key={prog.id}
                               className="py-3.5 px-4 border-s border-slate-100 dark:border-slate-800 tabular-nums"
                             >
-                              <div className="inline-flex items-center gap-1.5">
-                                <Star className="w-4 h-4 fill-amber-400 text-amber-500" />
-                                <span
-                                  className={`font-bold ${
-                                    isTop
-                                      ? 'text-emerald-700 dark:text-emerald-400'
-                                      : 'text-slate-900 dark:text-white'
-                                  }`}
-                                >
-                                  {prog.rating.toFixed(1)} / 5
+                              {hasLocal ? (
+                                <>
+                                  <div className="inline-flex items-center gap-1.5">
+                                    <Star className="w-4 h-4 fill-amber-400 text-amber-500" />
+                                    <span
+                                      className={`font-bold ${
+                                        isTop
+                                          ? 'text-emerald-700 dark:text-emerald-400'
+                                          : 'text-slate-900 dark:text-white'
+                                      }`}
+                                    >
+                                      {prog.rating.toFixed(1)} / 5
+                                    </span>
+                                  </div>
+                                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                                    {prog.ratingCount} {t('تقييم', 'ratings')}
+                                    {isTop ? ` · ${t('الأعلى', 'Top')}` : ''}
+                                  </div>
+                                </>
+                              ) : (
+                                <span className="text-xs text-slate-400 dark:text-slate-500">
+                                  {t('لم يقيّم محلياً بعد', 'No local ratings yet')}
                                 </span>
-                              </div>
-                              <div className="text-xs text-slate-500 dark:text-slate-400">
-                                {prog.ratingCount} {t('تقييم', 'ratings')}
-                                {isTop ? ` · ${t('الأعلى', 'Top')}` : ''}
-                              </div>
+                              )}
                             </td>
                           );
                         })}

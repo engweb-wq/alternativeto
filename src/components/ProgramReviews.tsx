@@ -116,18 +116,26 @@ export const ProgramReviews: React.FC<ProgramReviewsProps> = ({
         </div>
 
         <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 tabular-nums">
-          <span className="font-semibold text-slate-900 dark:text-white">
-            ★ {averageRating.toFixed(1)}
-          </span>
-          <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
-            ·
-          </span>
-          <span>
-            {ratingCount} {t('تقييم', ratingCount === 1 ? 'rating' : 'ratings')}
-          </span>
-          <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
-            ·
-          </span>
+          {ratingCount > 0 ? (
+            <>
+              <span className="font-semibold text-slate-900 dark:text-white">
+                ★ {averageRating.toFixed(1)}
+              </span>
+              <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
+                ·
+              </span>
+              <span>
+                {ratingCount} {t('تقييم', ratingCount === 1 ? 'rating' : 'ratings')}
+              </span>
+              <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
+                ·
+              </span>
+            </>
+          ) : (
+            <span className="text-slate-500 dark:text-slate-400">
+              {t('لم يقيّم محلياً بعد', 'No local ratings yet')} ·
+            </span>
+          )}
           <span>
             {reviews.length} {t('مراجعة مكتوبة', reviews.length === 1 ? 'written review' : 'written reviews')}
           </span>

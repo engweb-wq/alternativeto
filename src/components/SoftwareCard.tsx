@@ -11,6 +11,7 @@ import {
   Github,
 } from 'lucide-react';
 import { SoftwareEntry } from '../types/software';
+import { resolveHardwareProfile, resolveReplacementAssessment } from '../data/intelligenceData';
 import { useLongPress } from '../hooks/useLongPress';
 import { useLanguage } from '../i18n/LanguageContext';
 import { StarRating } from './StarRating';
@@ -46,6 +47,7 @@ export const SoftwareCard: React.FC<SoftwareCardProps> = ({
     translateCategory,
     translateLicenseCategory,
     translateLicenseType,
+    translateReplacementTier,
   } = useLanguage();
 
   const categoryLabel = translateCategory(entry.category);
@@ -55,6 +57,16 @@ export const SoftwareCard: React.FC<SoftwareCardProps> = ({
   });
   const bestAlt = sortedAlternatives[0];
   const otherAltCount = sortedAlternatives.length - 1;
+  const bestAssessment = bestAlt ? resolveReplacementAssessment(bestAlt, entry) : null;
+  const bestHardware = bestAlt
+    ? resolveHardwareProfile({
+        id: bestAlt.id,
+        category: entry.category,
+        platforms: bestAlt.platforms,
+        licenseCategory: bestAlt.licenseCategory,
+        features: bestAlt.features,
+      })
+    : null;
 
   const cardTutorial = entry.bimArabiaTutorial ?? bestAlt?.bimArabiaTutorial;
   const isLiked = bestAlt ? likedAltIds.has(bestAlt.id) : false;
@@ -112,7 +124,7 @@ export const SoftwareCard: React.FC<SoftwareCardProps> = ({
             <span className="text-xs font-medium text-amber-700 dark:text-amber-400 whitespace-nowrap">
               {translateLicenseCategory(entry.licenseCategory)}
             </span>
-            {entry.rating !== undefined && (
+            {(entry.ratingCount ?? 0) > 0 && entry.rating !== undefined && (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-700 dark:text-slate-200 tabular-nums">
                 <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" aria-hidden="true" />
                 <span>{entry.rating.toFixed(1)}</span>
@@ -195,20 +207,47 @@ export const SoftwareCard: React.FC<SoftwareCardProps> = ({
               {bestAlt.tagline}
             </p>
 
-            {/* Interactive 1-5 Star Rating & Live Average for Suggested Alternative */}
+            {bestAssessment && (
+              <div className="mb-3 space-y-0.5 text-xs">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-semibold text-blue-700 dark:text-blue-400">
+                    {translateReplacementTier(bestAssessment.tier)}
+                  </span>
+                  <span className="font-mono font-bold text-slate-800 dark:text-slate-200 tabular-nums">
+                    ~{bestAssessment.illustrativePercent}%
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                  {t(
+                    'نسبة توافق توضيحية وليست نتيجة اختبار فعلي',
+                    'Illustrative compatibility estimate, not a lab benchmark'
+                  )}
+                </p>
+              </div>
+            )}
+
+            {/* Interactive 1-5 Star Rating (Real Local User Ratings Only) */}
             <div className="mb-3">
               <StarRating
-                average={bestAlt.rating ?? 4.7}
-                count={bestAlt.ratingCount ?? 40}
+                average={bestAlt.rating ?? 0}
+                count={bestAlt.ratingCount ?? 0}
                 userRating={bestAlt.userRating}
                 onRate={(stars) => onRateProgram(bestAlt.id, stars)}
-                label={t('تقييم البديل:', 'Alternative rating:')}
+                label={t('تقييمك للبديل:', 'Your rating:')}
               />
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400 mb-4">
-              <span>
-                {t('يعمل على:', 'Runs on:')} {bestAlt.platforms.join(' · ')}
+              <span className="tabular-nums">
+                {bestAlt.platforms.join(' / ')}
+                {bestHardware && (
+                  <>
+                    {' · '}
+                    RAM {bestHardware.minRamGb}GB+
+                    {bestHardware.offlineCapable ? ` · ${t('دون إنترنت', 'Offline')}` : ''}
+                    {bestHardware.portableAvailable ? ' · Portable' : ''}
+                  </>
+                )}
               </span>
               {bestAlt.githubUrl && (
                 <a

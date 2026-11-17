@@ -15,14 +15,22 @@ import {
   Search,
   ArrowLeftRight,
   Github,
+  Cpu,
+  Milestone,
+  Scale,
 } from 'lucide-react';
 import {
   BIM_ARABIA_BEST_ALTERNATIVES_URL,
   BIM_ARABIA_CHANNEL_URL,
 } from '../data/catalog';
 import {
+  MIGRATION_PATHS,
+  resolveReplacementAssessment,
+} from '../data/intelligenceData';
+import {
   BimArabiaTutorial,
   FreeAlternative,
+  FunctionSupportLevel,
   LicenseType,
   OperatingSystem,
   ProgramReview,
@@ -58,6 +66,22 @@ interface ProgramPageProps {
   ) => void;
   onAttachBimTutorial: (programId: string, tutorial: BimArabiaTutorial) => void;
   onUpdateDownloadUrl: (programId: string, downloadUrl: string) => void;
+  onOpenMigrationPaths?: () => void;
+}
+
+function getFunctionStatusColor(status: FunctionSupportLevel): string {
+  switch (status) {
+    case 'ممتاز':
+      return 'text-emerald-700 dark:text-emerald-400 font-bold';
+    case 'جيد':
+      return 'text-blue-700 dark:text-blue-400 font-semibold';
+    case 'مختلف':
+    case 'محدود':
+    case 'يحتاج تقييم':
+      return 'text-amber-700 dark:text-amber-400 font-semibold';
+    default:
+      return 'text-red-700 dark:text-red-400 font-semibold';
+  }
 }
 
 export const ProgramPage: React.FC<ProgramPageProps> = ({
@@ -78,6 +102,7 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
   onAddAlternativeToSoftware,
   onAttachBimTutorial,
   onUpdateDownloadUrl,
+  onOpenMigrationPaths,
 }) => {
   const [compareAltId, setCompareAltId] = useState<string | null>(null);
   const [showSuggestForm, setShowSuggestForm] = useState(false);
@@ -106,6 +131,10 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
     translateLicenseCategory,
     translateLicenseType,
     translateArabicSupport,
+    translateReplacementTier,
+    translateFunctionStatus,
+    translateGpuTier,
+    translateMaintenanceStatus,
   } = useLanguage();
   const BackArrow = isAr ? ArrowRight : ArrowLeft;
   const NavArrow = isAr ? ArrowUpLeft : ArrowUpRight;
@@ -129,6 +158,16 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
 
   const activeCompareAlt =
     sortedAlternatives.find((a) => a.id === compareAltId) ?? sortedAlternatives[0] ?? null;
+
+  const displayedAssessment =
+    program.replacementAssessment ??
+    (sortedAlternatives[0] && commercial
+      ? resolveReplacementAssessment(sortedAlternatives[0], commercial)
+      : undefined);
+
+  const matchingMigrationPath = MIGRATION_PATHS.find(
+    (m) => m.commercialId === program.id || m.targetProgramId === program.id
+  );
 
   const bimSearchUrl = `${BIM_ARABIA_CHANNEL_URL}/search?query=${encodeURIComponent(program.name)}`;
 
@@ -440,6 +479,54 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
               </div>
             </div>
 
+            {/* Hardware & Portability Summary Strip */}
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-200">
+                <Cpu className="w-4 h-4 text-blue-700 dark:text-blue-400" />
+                <span>{t('متطلبات العتاد والعمل الميداني', 'Hardware Requirements & Runtime Profile')}</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <div>
+                  <span className="text-slate-500 dark:text-slate-400 block">
+                    {t('الذاكرة (RAM)', 'Memory (RAM)')}
+                  </span>
+                  <span className="font-mono font-semibold text-slate-900 dark:text-white tabular-nums">
+                    {t('أدنى', 'Min')} {program.hardwareProfile.minRamGb}GB · {t('موصى', 'Rec')}{' '}
+                    {program.hardwareProfile.recRamGb}GB
+                  </span>
+                  <span className="text-slate-500 dark:text-slate-400 block tabular-nums">
+                    {t('استهلاك فعلي:', 'Actual:')} {program.hardwareProfile.actualRamUsage}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-slate-500 dark:text-slate-400 block">
+                    {t('كرت الشاشة والمعالج', 'GPU & CPU')}
+                  </span>
+                  <span className="font-medium text-slate-900 dark:text-white block">
+                    {translateGpuTier(program.hardwareProfile.gpuTier)}
+                  </span>
+                  <span className="text-slate-500 dark:text-slate-400 block">
+                    {isAr ? program.hardwareProfile.cpuAr : program.hardwareProfile.cpuEn}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-slate-500 dark:text-slate-400 block">
+                    {t('الحالة والاستقلالية', 'Status & Portability')}
+                  </span>
+                  <span className="font-medium text-slate-900 dark:text-white block">
+                    {translateMaintenanceStatus(program.maintenanceStatus)} ·{' '}
+                    {program.offlineCapable ? t('يعمل دون إنترنت', 'Offline') : t('شبكي', 'Network')}
+                  </span>
+                  <span className="text-slate-500 dark:text-slate-400 block">
+                    {program.lowSpecFriendly
+                      ? t('مناسب للأجهزة الضعيفة', 'Low-spec friendly')
+                      : t('يتطلب جهازاً قوياً/متوسطاً', 'Mid/high spec')}{' '}
+                    {program.portableAvailable ? '· Portable' : ''}
+                  </span>
+                </div>
+              </div>
+            </div>
+
             {/* Official / Open-Source Download Source Strip (Stored in Program State) */}
             <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -552,6 +639,96 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
               </div>
             )}
           </div>
+
+          {/* Replacement Readiness Matrix: "هل تستطيع الاستغناء عن البرنامج المدفوع؟" */}
+          {displayedAssessment && (
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
+              <div className="p-6 sm:p-7 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-start justify-between gap-4">
+                <div className="space-y-1.5 max-w-2xl">
+                  <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 dark:text-blue-400">
+                    <Scale className="w-4 h-4" />
+                    <span>{t('تقييم القدرة على الاستبدال', 'Commercial Replacement Readiness')}</span>
+                  </div>
+                  <h2 className="font-display text-xl font-bold text-slate-900 dark:text-white">
+                    {program.kind === 'alternative'
+                      ? t(
+                          `هل ${program.name} بديل لـ ${displayedAssessment.targetCommercialName}؟`,
+                          `Can ${program.name} Replace ${displayedAssessment.targetCommercialName}?`
+                        )
+                      : t(
+                          `هل يمكنك الاستغناء عن ${program.name} بالبدائل المجانية؟`,
+                          `Can You Replace ${program.name} With Free Alternatives?`
+                        )}
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+                    {isAr ? displayedAssessment.basisNoteAr : displayedAssessment.basisNoteEn}
+                  </p>
+                </div>
+
+                <div className="text-start sm:text-end shrink-0 space-y-1">
+                  <span className="font-display text-sm font-bold text-blue-700 dark:text-blue-400 block">
+                    {translateReplacementTier(displayedAssessment.tier)}
+                  </span>
+                  <span className="font-mono text-2xl font-extrabold text-slate-900 dark:text-white tabular-nums block">
+                    ~{displayedAssessment.illustrativePercent}%
+                  </span>
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500 block">
+                    {t(
+                      'نسبة توافق توضيحية وليست نتيجة اختبار فعلي',
+                      'Illustrative score, not a lab benchmark'
+                    )}
+                  </span>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-start text-xs sm:text-sm border-collapse">
+                  <thead className="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300">
+                    <tr>
+                      <th className="py-3 px-6 font-semibold text-start">{t('الوظيفة الهندسية', 'Workflow Function')}</th>
+                      <th className="py-3 px-6 font-semibold text-start">{t('مستوى التوافق', 'Readiness')}</th>
+                      <th className="py-3 px-6 font-semibold text-start">{t('ملاحظة عملية', 'Practical Note')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {displayedAssessment.functionRows.map((row) => (
+                      <tr key={row.fnEn}>
+                        <td className="py-3 px-6 font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                          {isAr ? row.fnAr : row.fnEn}
+                        </td>
+                        <td className={`py-3 px-6 whitespace-nowrap ${getFunctionStatusColor(row.status)}`}>
+                          {translateFunctionStatus(row.status)}
+                        </td>
+                        <td className="py-3 px-6 text-slate-600 dark:text-slate-300">
+                          {isAr ? row.noteAr ?? '—' : row.noteEn ?? '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {matchingMigrationPath && onOpenMigrationPaths && (
+                <div className="px-6 py-3.5 bg-slate-50/70 dark:bg-slate-950/60 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
+                  <span className="text-slate-600 dark:text-slate-300 font-medium">
+                    <Milestone className="w-3.5 h-3.5 inline me-1.5 text-emerald-700 dark:text-emerald-400" />
+                    {isAr ? matchingMigrationPath.titleAr : matchingMigrationPath.titleEn} (
+                    {isAr
+                      ? matchingMigrationPath.estimatedTransitionTimeAr
+                      : matchingMigrationPath.estimatedTransitionTimeEn}
+                    )
+                  </span>
+                  <button
+                    type="button"
+                    onClick={onOpenMigrationPaths}
+                    className="font-semibold text-blue-700 dark:text-blue-400 hover:underline cursor-pointer"
+                  >
+                    {t('فتح خطة الانتقال الأسبوعية', 'Open Weekly Migration Plan')}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* If Commercial Program: Ranked Free Alternatives + Comparison Matrix */}
           {commercial && (
@@ -782,8 +959,8 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
 
                       <div>
                         <StarRating
-                          average={alt.rating ?? 4.6}
-                          count={alt.ratingCount ?? 35}
+                          average={alt.rating ?? 0}
+                          count={alt.ratingCount ?? 0}
                           userRating={alt.userRating}
                           onRate={(stars) => onRateProgram(alt.id, stars)}
                           label={t('قيّم جودة البديل:', 'Rate this alternative:')}
@@ -873,13 +1050,19 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                       <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                         <tr>
                           <td className="py-3 px-4 font-medium">
-                            {t('متوسط تقييم المستخدمين', 'Average User Rating')}
+                            {t('متوسط تقييم المستخدمين المحلي', 'Local User Rating')}
                           </td>
                           <td className="py-3 px-4 tabular-nums">
-                            {(commercial.rating ?? program.rating).toFixed(1)} / 5 ({commercial.ratingCount ?? program.ratingCount} {t('تقييم', 'ratings')})
+                            {(commercial.ratingCount ?? program.ratingCount) > 0
+                              ? `${(commercial.rating ?? program.rating).toFixed(1)} / 5 (${
+                                  commercial.ratingCount ?? program.ratingCount
+                                })`
+                              : t('لم يقيّم محلياً بعد', 'No local ratings yet')}
                           </td>
                           <td className="py-3 px-4 font-semibold text-emerald-700 dark:text-emerald-400 tabular-nums">
-                            {(activeCompareAlt.rating ?? 4.6).toFixed(1)} / 5 ({activeCompareAlt.ratingCount ?? 35} {t('تقييم', 'ratings')})
+                            {(activeCompareAlt.ratingCount ?? 0) > 0
+                              ? `${(activeCompareAlt.rating ?? 0).toFixed(1)} / 5 (${activeCompareAlt.ratingCount})`
+                              : t('لم يقيّم محلياً بعد', 'No local ratings yet')}
                           </td>
                         </tr>
                         <tr>
@@ -1007,7 +1190,9 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
 
                       <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
                         <span className="text-xs font-medium text-slate-600 dark:text-slate-300 tabular-nums">
-                          ★ {sim.rating.toFixed(1)} ({sim.ratingCount} {t('تقييم', 'ratings')})
+                          {sim.ratingCount > 0
+                            ? `★ ${sim.rating.toFixed(1)} (${sim.ratingCount})`
+                            : `RAM ${sim.hardwareProfile.minRamGb}GB+`}
                         </span>
 
                         <a
@@ -1174,7 +1359,8 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                         {rel.name}
                       </a>
                       <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums truncate block">
-                        {translateLicenseCategory(rel.licenseCategory)} · ★ {rel.rating.toFixed(1)}
+                        {translateLicenseCategory(rel.licenseCategory)}
+                        {rel.ratingCount > 0 ? ` · ★ ${rel.rating.toFixed(1)}` : ` · RAM ${rel.hardwareProfile.minRamGb}GB+`}
                         {sharedFeatures.length > 0 ? ` · ${translateFeature(sharedFeatures[0])}` : ''}
                       </span>
                     </div>
