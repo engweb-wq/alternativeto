@@ -1,16 +1,23 @@
 import React from 'react';
-import { ArrowUpLeft, Youtube, ExternalLink } from 'lucide-react';
+import { ArrowUpLeft, Youtube, ExternalLink, ArrowLeftRight, Github } from 'lucide-react';
 import { CATEGORIES } from '../data/catalog';
 import { UnifiedProgramItem } from '../types/software';
+import { StarRating } from './StarRating';
 
 interface UnifiedProgramCardProps {
   item: UnifiedProgramItem;
+  isCompared: boolean;
+  onToggleCompare: (programId: string) => void;
   onOpenProgramPage: (programId: string) => void;
+  onRateProgram: (programId: string, stars: number) => void;
 }
 
 export const UnifiedProgramCard: React.FC<UnifiedProgramCardProps> = ({
   item,
+  isCompared,
+  onToggleCompare,
   onOpenProgramPage,
+  onRateProgram,
 }) => {
   const categoryLabel = CATEGORIES.find((c) => c.id === item.category)?.label ?? item.category;
 
@@ -64,11 +71,29 @@ export const UnifiedProgramCard: React.FC<UnifiedProgramCardProps> = ({
           <span>{item.platforms.join(' / ')}</span>
           <span aria-hidden="true">·</span>
           <span>{item.licenseLabel}</span>
+          {item.isArabicOrigin && (
+            <>
+              <span aria-hidden="true">·</span>
+              <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+                {item.originLabel ?? 'بديل عربي'}
+              </span>
+            </>
+          )}
         </div>
 
-        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
+        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-3">
           {item.shortSummary}
         </p>
+
+        <div className="mb-3">
+          <StarRating
+            average={item.rating}
+            count={item.ratingCount}
+            userRating={item.userRating}
+            onRate={(stars) => onRateProgram(item.id, stars)}
+            label="التقييم:"
+          />
+        </div>
 
         <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
           الميزات: {item.features.join(' · ')}
@@ -91,16 +116,45 @@ export const UnifiedProgramCard: React.FC<UnifiedProgramCardProps> = ({
           </a>
         )}
 
-        <div className="flex items-center justify-between gap-3">
-          <a
-            href={item.websiteUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
-          >
-            <span>الموقع الرسمي</span>
-            <ExternalLink className="w-3 h-3" />
-          </a>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => onToggleCompare(item.id)}
+              aria-pressed={isCompared}
+              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                isCompared
+                  ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-300 dark:border-blue-800 text-blue-700 dark:text-blue-300'
+                  : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+              }`}
+            >
+              <ArrowLeftRight className="w-3.5 h-3.5" />
+              <span>{isCompared ? 'في المقارنة' : 'قارن'}</span>
+            </button>
+
+            <a
+              href={item.websiteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+            >
+              <span>الموقع</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
+
+            {item.githubUrl && (
+              <a
+                href={item.githubUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`مستودع GitHub لـ ${item.name}`}
+                className="inline-flex items-center gap-1 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+              >
+                <Github className="w-3.5 h-3.5" />
+                <span>GitHub</span>
+              </a>
+            )}
+          </div>
 
           <a
             href={`#program/${item.id}`}

@@ -4,14 +4,25 @@ import {
   SoftwareEntry,
   UnifiedProgramItem,
 } from '../types/software';
+import { EXTENDED_SOFTWARE_CATALOG } from './catalogExtended';
+import { MORE_SOFTWARE_CATALOG } from './catalogMore';
+import { ARABIC_AND_MORE_CATALOG } from './catalogArabicAndMore';
+import { GITHUB_TOP_CATALOG } from './catalogGithubTop';
+import { AI_SOFTWARE_CATALOG } from './catalogAI';
+import { resolveProgramDownloadUrl } from './downloadLinks';
+import { resolveProgramGithubUrl } from './githubRepos';
+import { resolveBimArabiaTutorial } from './bimArabiaLinks';
 
 export const BIM_ARABIA_CHANNEL_URL = 'https://www.youtube.com/@omar_selim1';
+export const BIM_ARABIA_BEST_ALTERNATIVES_URL =
+  'https://www.youtube.com/show/VLPLNMim060_nUK6qoVzrpjLucG_aBNaz_Ny?sbp=KgsyTnVzWFlVZGJ0OEAB';
 
 export const FEATURE_TAGS: FeatureTag[] = [
   'OpenBIM / IFC',
   'رسم 2D / DWG',
   'نمذجة 3D',
   'إظهار معماري',
+  'ذكاء اصطناعي',
   'دعم العربية',
   'إدارة مشاريع',
   'أتمتة وبرمجة',
@@ -27,6 +38,11 @@ export const CATEGORIES: CategoryMeta[] = [
     id: 'bim-engineering',
     label: 'الهندسة والـ BIM',
     description: 'نمذجة معلومات المباني، الرسم الهندسي CAD، التنسيق، والتصميم الإنشائي والميكانيكي.',
+  },
+  {
+    id: 'ai-tools',
+    label: 'الذكاء الاصطناعي',
+    description: 'نماذج المحادثة المحلية، توليد الصور والفيديو، وكلاء الذكاء الاصطناعي، والأدوات الهندسية الذكية.',
   },
   {
     id: 'design',
@@ -57,44 +73,69 @@ export const CATEGORIES: CategoryMeta[] = [
 
 export const BIM_ARABIA_PLAYLIST_TOPICS = [
   {
-    title: 'شروحات Revit والـ BIM المعماري والإنشائي',
-    query: 'Revit',
+    title: 'سلسلة «أفضل البدائل» — البرامج المجانية ومفتوحة المصدر',
+    query: 'سلسلة أفضل البدائل',
+    url: BIM_ARABIA_BEST_ALTERNATIVES_URL,
+    description: 'قائمة التشغيل الرسمية على قناة بيم أرابيا لاستعراض أقوى البدائل المجانية ومفتوحة المصدر للبرامج الهندسية والتقنية.',
+    isFeaturedSeries: true,
+  },
+  {
+    title: 'الطريق إلى BIM ومقرر نمذجة معلومات المباني',
+    query: 'الطريق إلى BIM',
+    url: 'https://www.youtube.com/@omar_selim1/search?query=BIM',
+    description: 'مسار متكامل للمهندسين من التأسيس حتى إدارة مشاريع الـ BIM والمعايير العالمية.',
+  },
+  {
+    title: 'معايير ISO 19650 وبيئة البيانات المشتركة CDE',
+    query: 'ISO 19650',
+    url: 'https://www.youtube.com/@omar_selim1/search?query=ISO+19650',
+    description: 'شرح خطط تنفيذ البيم BEP ومعايير إدارة المعلومات الهندسية ومشاركة النماذج سحابياً.',
+  },
+  {
+    title: 'OpenBIM و BlenderBIM (Bonsai) و FreeCAD و Speckle',
+    query: 'OpenBIM · BlenderBIM',
+    url: 'https://www.youtube.com/@omar_selim1/search?query=BlenderBIM',
+    description: 'العمل بملفات IFC المفتوحة المصدر وبدائل الريفيت والكاد المجانية ومنصة Speckle.',
+  },
+  {
+    title: 'شروحات Revit و Dynamo والأتمتة الهندسية',
+    query: 'Revit · Dynamo',
     url: 'https://www.youtube.com/@omar_selim1/search?query=Revit',
-    description: 'تأسيس مشاريع الـ BIM، العائلات، الحصر، والتنسيق بين التخصصات.',
+    description: 'تأسيس مشاريع الـ BIM، العائلات، الحصر، والأتمتة باستخدام البرمجة البصرية.',
   },
   {
-    title: 'OpenBIM وملفات IFC و BlenderBIM',
-    query: 'Blender',
-    url: 'https://www.youtube.com/@omar_selim1/search?query=Blender',
-    description: 'استخدام البدائل المفتوحة المصدر للتعامل مع معايير OpenBIM و IFC.',
-  },
-  {
-    title: 'Navisworks وكشف التعارضات (4D / Clash)',
-    query: 'Navisworks',
+    title: 'Navisworks وكشف التعارضات و Synchro (4D / 5D)',
+    query: 'Navisworks · 4D',
     url: 'https://www.youtube.com/@omar_selim1/search?query=Navisworks',
-    description: 'مراجعة النماذج، كشف التعارضات، وربط الجدول الزمني بالنموذج.',
+    description: 'مراجعة النماذج، كشف التعارضات، وربط الجدول الزمني والتكلفة بالنموذج.',
   },
   {
-    title: 'Dynamo والأتمتة الهندسية',
-    query: 'Dynamo',
-    url: 'https://www.youtube.com/@omar_selim1/search?query=Dynamo',
-    description: 'أتمتة المهام المتكررة في مشاريع الـ BIM باستخدام البرمجة البصرية.',
+    title: 'Civil 3D و ArchiCAD و Tekla و Solibri و Robot',
+    query: 'Civil 3D · Solibri',
+    url: 'https://www.youtube.com/@omar_selim1/search?query=Civil+3D',
+    description: 'تطبيقات البنية التحتية والطرق والإنشائي وفحص جودة النماذج ومقارنات برامج الـ BIM.',
   },
   {
-    title: 'FreeCAD والبدائل المجانية للـ CAD و BIM',
-    query: 'FreeCAD',
-    url: 'https://www.youtube.com/@omar_selim1/search?query=FreeCAD',
-    description: 'تطبيقات عملية مجانية للرسم الهندسي ونمذجة المباني دون اشتراكات.',
-  },
-  {
-    title: 'إدارة المشاريع الهندسية و Primavera P6',
-    query: 'Primavera',
+    title: 'إدارة المشاريع Primavera P6 ومجلة بيم أرابيا',
+    query: 'Primavera · مجلة بيم أرابيا',
     url: 'https://www.youtube.com/@omar_selim1/search?query=Primavera',
-    description: 'تخطيط المشاريع الإنشائية ومتابعة البرامج الزمنية وربطها بالـ BIM.',
+    description: 'التخطيط الزمني وربطه بالـ BIM مع قراءات وكبسولات علمية من مجلة بيم أرابيا.',
+  },
+  {
+    title: 'الذكاء الاصطناعي في العمارة والـ BIM (Forma & AI)',
+    query: 'AI · Autodesk Forma',
+    url: 'https://www.youtube.com/@omar_selim1/search?query=AI',
+    description: 'تطبيقات الذكاء الاصطناعي في التصميم المعماري، تلخيص PDF، وأتمتة المهام الهندسية.',
+  },
+  {
+    title: 'Visio و OpenStudio و InfoDrainage وتحليل الطاقة',
+    query: 'Visio · OpenStudio',
+    url: 'https://www.youtube.com/@omar_selim1/search?query=OpenStudio',
+    description: 'شروحات محاكاة الطاقة للمباني، شبكات تصريف المياه، والرسومات التخطيطية.',
   },
 ];
 
-export const INITIAL_SOFTWARE_CATALOG: SoftwareEntry[] = [
+const CORE_SOFTWARE_CATALOG: SoftwareEntry[] = [
   {
     id: 'autodesk-revit',
     name: 'Autodesk Revit',
@@ -719,6 +760,31 @@ export const INITIAL_SOFTWARE_CATALOG: SoftwareEntry[] = [
         fileFormats: ['SVG', 'PDF', 'EPS', 'DXF', 'PNG'],
         arabicSupport: 'ممتاز',
       },
+      {
+        id: 'varos-vector',
+        name: 'Varos (ڤاروس)',
+        arabicName: 'ڤاروس للتصميم العربي',
+        tagline: 'برنامج تصميم فيكتور عربي مفتوح المصدر يدعم الكشيدة وتلوين الحركات',
+        description:
+          'مشروع عربي مجاني ومفتوح المصدر (منصة مرتكز) مبني خصيصاً لاحتياجات المصمم العربي، يدعم ضبط الكشيدة تلقائياً وتلوين التشكيل دون تقطيع الحروف.',
+        license: 'مفتوح المصدر',
+        licenseCategory: 'مفتوح المصدر',
+        licenseCode: 'Open Source',
+        platforms: ['Windows', 'macOS', 'Linux', 'Web'],
+        features: ['تحرير صور وفيكتور', 'دعم العربية', 'يعمل على الويب'],
+        websiteUrl: 'https://www.mortakaz.com/',
+        isBestFree: false,
+        isArabicOrigin: true,
+        originLabel: 'مشروع عربي · مرتكز',
+        likes: 685,
+        keyAdvantages: [
+          'دعم أصلي لضبط الكشيدة العربية وتلوين الحركات دون انفصال الحروف',
+          'واجهة عربية بالكامل ومفتوح المصدر مجاناً',
+          'تصدير مباشر لصيغ SVG و PNG المناسبة للتصاميم والهويات العربية',
+        ],
+        fileFormats: ['SVG', 'PNG', 'PDF'],
+        arabicSupport: 'ممتاز',
+      },
     ],
   },
   {
@@ -954,6 +1020,54 @@ export const INITIAL_SOFTWARE_CATALOG: SoftwareEntry[] = [
           'دعم جيد للنصوص العربية وتقنية OCR',
         ],
         fileFormats: ['PDF', 'DOCX', 'XLSX', 'PNG'],
+        arabicSupport: 'ممتاز',
+      },
+      {
+        id: 'waraq-pdf',
+        name: 'ورق (Waraq)',
+        arabicName: 'ورق لاستخراج فوائد PDF',
+        tagline: 'أداة عربية من مرتكز لاستخراج الاقتباسات والفوائد من كتب وأبحاث PDF',
+        description:
+          'برنامج عربي يساعد الباحثين والمهندسين على استخراج الفوائد العلمية والاقتباسات وتنظيمها من ملفات PDF بسهولة.',
+        license: 'مجاني بالكامل',
+        licenseCategory: 'مجاني',
+        licenseCode: 'Freeware',
+        platforms: ['Web', 'Windows', 'macOS'],
+        features: ['تعديل PDF', 'دعم العربية', 'يعمل على الويب'],
+        websiteUrl: 'https://www.mortakaz.com/',
+        isBestFree: false,
+        isArabicOrigin: true,
+        originLabel: 'مشروع عربي · مرتكز',
+        likes: 495,
+        keyAdvantages: [
+          'تنظيم واستخراج الاقتباسات والفوائد من المستندات العربية الكبيرة',
+          'دعم كامل للغة العربية والنصوص من اليمين لليسار',
+          'مشروع عربي تقني مدرج في منصة مرتكز',
+        ],
+        fileFormats: ['PDF', 'TXT', 'MD'],
+        arabicSupport: 'ممتاز',
+      },
+      {
+        id: 'pdf24-creator',
+        name: 'PDF24 Creator',
+        arabicName: 'بي دي إف 24',
+        tagline: 'حزمة أدوات مكتبية وويب مجانية 100% لضغط ودمج وتحرير PDF',
+        description:
+          'أداة ألمانية مجانية تماماً للشركات والأفراد تعمل دون إنترنت أو عبر الويب لدمج المخططات، تقليص حجم PDF، وإضافة التوقيع.',
+        license: 'مجاني بالكامل',
+        licenseCategory: 'مجاني',
+        licenseCode: 'Freeware',
+        platforms: ['Windows', 'Web'],
+        features: ['تعديل PDF', 'دعم العربية', 'يعمل على الويب'],
+        websiteUrl: 'https://tools.pdf24.org/',
+        isBestFree: false,
+        likes: 920,
+        keyAdvantages: [
+          'مجاني للشركات والأفراد بلا أي حدود يومية أو علامات مائية',
+          'تعمل الأدوات محلياً على الجهاز للحفاظ على سرية الملفات الهندسية',
+          'يدعم اللغة العربية وضغط الملفات الهندسية الكبيرة بكفاءة',
+        ],
+        fileFormats: ['PDF', 'DOCX', 'PNG', 'JPG'],
         arabicSupport: 'ممتاز',
       },
     ],
@@ -1382,11 +1496,65 @@ export const INITIAL_SOFTWARE_CATALOG: SoftwareEntry[] = [
   },
 ];
 
+export const INITIAL_SOFTWARE_CATALOG: SoftwareEntry[] = [
+  ...CORE_SOFTWARE_CATALOG,
+  ...EXTENDED_SOFTWARE_CATALOG,
+  ...MORE_SOFTWARE_CATALOG,
+  ...ARABIC_AND_MORE_CATALOG,
+  ...GITHUB_TOP_CATALOG,
+  ...AI_SOFTWARE_CATALOG,
+];
+
+export function getBaseRating(
+  id: string,
+  likes: number,
+  kind: 'commercial' | 'alternative',
+  isBestFree?: boolean
+): { rating: number; ratingCount: number } {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = (hash * 31 + id.charCodeAt(i)) % 1000;
+  }
+  const baseCount = Math.max(18, Math.round(likes / 6) + (hash % 25));
+  const baseScore =
+    kind === 'commercial'
+      ? 4.2 + (hash % 7) * 0.1
+      : isBestFree
+      ? 4.5 + (hash % 5) * 0.1
+      : 4.1 + (hash % 7) * 0.1;
+
+  return {
+    rating: Number(Math.min(4.9, baseScore).toFixed(1)),
+    ratingCount: baseCount,
+  };
+}
+
+export function applyUserRating(
+  baseRating: number,
+  baseCount: number,
+  userRating?: number
+): { average: number; count: number } {
+  if (!userRating) {
+    return { average: baseRating, count: baseCount };
+  }
+  const totalSum = baseRating * baseCount + userRating;
+  const totalCount = baseCount + 1;
+  return {
+    average: Number((totalSum / totalCount).toFixed(1)),
+    count: totalCount,
+  };
+}
+
 export function buildUnifiedProgramIndex(entries: SoftwareEntry[]): UnifiedProgramItem[] {
   const items: UnifiedProgramItem[] = [];
   const seenAltIds = new Set<string>();
 
   for (const entry of entries) {
+    const topLikes = Math.max(...entry.alternatives.map((a) => a.likes), 0);
+    const baseCom = getBaseRating(entry.id, topLikes, 'commercial');
+    const comRating = entry.rating ?? baseCom.rating;
+    const comCount = entry.ratingCount ?? baseCom.ratingCount;
+
     items.push({
       id: entry.id,
       kind: 'commercial',
@@ -1403,16 +1571,27 @@ export function buildUnifiedProgramIndex(entries: SoftwareEntry[]): UnifiedProgr
       fileFormats: entry.fileFormats,
       arabicSupport: entry.arabicSupport,
       websiteUrl: entry.websiteUrl,
+      downloadUrl: resolveProgramDownloadUrl(entry.id, entry.websiteUrl, entry.downloadUrl),
+      githubUrl: resolveProgramGithubUrl(entry.id, entry.githubUrl),
       accentColor: entry.accentColor,
       monogram: entry.monogram,
-      likes: Math.max(...entry.alternatives.map((a) => a.likes), 0),
-      bimArabiaTutorial: entry.bimArabiaTutorial,
+      likes: topLikes,
+      rating: comRating,
+      ratingCount: comCount,
+      userRating: entry.userRating,
+      isArabicOrigin: entry.isArabicOrigin,
+      originLabel: entry.originLabel,
+      bimArabiaTutorial: resolveBimArabiaTutorial(entry.id, entry.bimArabiaTutorial),
       commercialEntry: entry,
     });
 
     for (const alt of entry.alternatives) {
       if (seenAltIds.has(alt.id)) continue;
       seenAltIds.add(alt.id);
+
+      const baseAlt = getBaseRating(alt.id, alt.likes, 'alternative', alt.isBestFree);
+      const altRating = alt.rating ?? baseAlt.rating;
+      const altCount = alt.ratingCount ?? baseAlt.ratingCount;
 
       items.push({
         id: alt.id,
@@ -1430,10 +1609,17 @@ export function buildUnifiedProgramIndex(entries: SoftwareEntry[]): UnifiedProgr
         fileFormats: alt.fileFormats,
         arabicSupport: alt.arabicSupport,
         websiteUrl: alt.websiteUrl,
+        downloadUrl: resolveProgramDownloadUrl(alt.id, alt.websiteUrl, alt.downloadUrl),
+        githubUrl: resolveProgramGithubUrl(alt.id, alt.githubUrl),
         accentColor: alt.licenseCategory === 'مفتوح المصدر' ? '#047857' : '#0369A1',
         monogram: alt.name.slice(0, 2).toUpperCase(),
         likes: alt.likes,
-        bimArabiaTutorial: alt.bimArabiaTutorial,
+        rating: altRating,
+        ratingCount: altCount,
+        userRating: alt.userRating,
+        isArabicOrigin: alt.isArabicOrigin,
+        originLabel: alt.originLabel,
+        bimArabiaTutorial: resolveBimArabiaTutorial(alt.id, alt.bimArabiaTutorial),
         parentCommercial: entry,
         alternativeEntry: alt,
       });

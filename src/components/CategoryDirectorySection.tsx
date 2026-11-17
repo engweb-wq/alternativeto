@@ -1,5 +1,5 @@
-import React from 'react';
-import { ArrowUpLeft, Youtube } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowUpLeft, ChevronDown, ChevronUp, Star, Youtube } from 'lucide-react';
 import { CATEGORIES } from '../data/catalog';
 import { SoftwareCategory, UnifiedProgramItem } from '../types/software';
 
@@ -9,11 +9,19 @@ interface CategoryDirectorySectionProps {
   onSelectCategoryFilter: (cat: SoftwareCategory) => void;
 }
 
+const INITIAL_VISIBLE_PER_CATEGORY = 6;
+
 export const CategoryDirectorySection: React.FC<CategoryDirectorySectionProps> = ({
   unifiedPrograms,
   onOpenProgramPage,
   onSelectCategoryFilter,
 }) => {
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
+
+  const toggleCategoryExpand = (catId: string) => {
+    setExpandedCategories((prev) => ({ ...prev, [catId]: !prev[catId] }));
+  };
+
   return (
     <section
       id="categories-directory"
@@ -28,13 +36,18 @@ export const CategoryDirectorySection: React.FC<CategoryDirectorySectionProps> =
             دليل البرامج المصنّف حسب الفئات
           </h2>
           <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
-            استعرض قائمة البرامج التجارية والمجانية ومفتوحة المصدر موزعة على فئات الإنتاجية، التصميم، التطوير، الألعاب، الهندسة والـ BIM، والمونتاج والصوتيات مع رابط مباشر لصفحة كل برنامج.
+            استعرض قائمة البرامج التجارية والمجانية ومفتوحة المصدر موزعة على فئات الهندسة والـ BIM، الذكاء الاصطناعي، التصميم، الإنتاجية، التطوير، الألعاب، والمونتاج والصوتيات مع رابط مباشر لصفحة كل برنامج.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {CATEGORIES.map((category) => {
             const categoryPrograms = unifiedPrograms.filter((p) => p.category === category.id);
+            const isExpanded = Boolean(expandedCategories[category.id]);
+            const hasMore = categoryPrograms.length > INITIAL_VISIBLE_PER_CATEGORY;
+            const visiblePrograms = isExpanded
+              ? categoryPrograms
+              : categoryPrograms.slice(0, INITIAL_VISIBLE_PER_CATEGORY);
 
             return (
               <div
@@ -57,7 +70,7 @@ export const CategoryDirectorySection: React.FC<CategoryDirectorySectionProps> =
                   </div>
 
                   <ul className="divide-y divide-slate-100 dark:divide-slate-800 my-2">
-                    {categoryPrograms.map((prog) => (
+                    {visiblePrograms.map((prog) => (
                       <li key={prog.id} className="py-3.5 flex items-start justify-between gap-4">
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -84,6 +97,13 @@ export const CategoryDirectorySection: React.FC<CategoryDirectorySectionProps> =
                               }`}
                             >
                               {prog.licenseCategory}
+                            </span>
+                            <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
+                              ·
+                            </span>
+                            <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-600 dark:text-slate-300 tabular-nums">
+                              <Star className="w-3 h-3 fill-amber-400 text-amber-500" aria-hidden="true" />
+                              <span>{prog.rating.toFixed(1)}</span>
                             </span>
                             {prog.bimArabiaTutorial?.hasTutorial && (
                               <>
@@ -118,7 +138,7 @@ export const CategoryDirectorySection: React.FC<CategoryDirectorySectionProps> =
                   </ul>
                 </div>
 
-                <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
                   <button
                     type="button"
                     onClick={() => {
@@ -129,6 +149,25 @@ export const CategoryDirectorySection: React.FC<CategoryDirectorySectionProps> =
                   >
                     تصفية البحث المتقدم على فئة {category.label}
                   </button>
+
+                  {hasMore && (
+                    <button
+                      type="button"
+                      onClick={() => toggleCategoryExpand(category.id)}
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 dark:text-blue-400 hover:underline cursor-pointer tabular-nums"
+                    >
+                      <span>
+                        {isExpanded
+                          ? 'عرض عدد أقل'
+                          : `عرض الكل (+${categoryPrograms.length - INITIAL_VISIBLE_PER_CATEGORY})`}
+                      </span>
+                      {isExpanded ? (
+                        <ChevronUp className="w-3.5 h-3.5" />
+                      ) : (
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
             );

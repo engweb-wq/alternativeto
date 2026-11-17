@@ -1,16 +1,23 @@
 import { useEffect, useMemo, useState } from 'react';
-import { RotateCcw } from 'lucide-react';
+import { ArrowLeftRight, RotateCcw, X } from 'lucide-react';
 import {
   BIM_ARABIA_CHANNEL_URL,
   INITIAL_SOFTWARE_CATALOG,
+  applyUserRating,
   buildUnifiedProgramIndex,
+  getBaseRating,
 } from './data/catalog';
+import { resolveProgramDownloadUrl } from './data/downloadLinks';
+import { resolveProgramGithubUrl } from './data/githubRepos';
+import { resolveBimArabiaTutorial } from './data/bimArabiaLinks';
+import { getSimilarPrograms } from './utils/recommendations';
 import {
   BimArabiaTutorial,
   FeatureTag,
   FreeAlternative,
   LicenseCategory,
   OperatingSystem,
+  ProgramReview,
   SoftwareCategory,
   SoftwareEntry,
 } from './types/software';
@@ -24,13 +31,18 @@ import { BimArabiaSection } from './components/BimArabiaSection';
 import { ProgramPage } from './components/ProgramPage';
 import { AddEntryModal } from './components/AddEntryModal';
 import { ToolkitDrawer } from './components/ToolkitDrawer';
+import { CompareModal } from './components/CompareModal';
 
 const STORAGE_KEYS = {
   LIKES: 'badeelak_liked_alts_v1',
   SAVED: 'badeelak_saved_alts_v1',
+  COMPARE: 'badeelak_compare_ids_v1',
+  RATINGS: 'badeelak_user_ratings_v1',
+  REVIEWS: 'badeelak_program_reviews_v1',
   CUSTOM_ENTRIES: 'badeelak_custom_entries_v2',
   CUSTOM_ALTS: 'badeelak_custom_alts_v2',
   CUSTOM_BIM_LINKS: 'badeelak_custom_bim_v1',
+  DOWNLOAD_URLS: 'badeelak_program_downloads_v1',
   THEME: 'badeelak_theme_v1',
 };
 
@@ -61,12 +73,24 @@ export default function App() {
   const [customBimByProgram, setCustomBimByProgram] = useState<
     Record<string, BimArabiaTutorial>
   >(() => loadJson<Record<string, BimArabiaTutorial>>(STORAGE_KEYS.CUSTOM_BIM_LINKS, {}));
+  const [customDownloadsByProgram, setCustomDownloadsByProgram] = useState<
+    Record<string, string>
+  >(() => loadJson<Record<string, string>>(STORAGE_KEYS.DOWNLOAD_URLS, {}));
 
   const [likedIds, setLikedIds] = useState<string[]>(() =>
     loadJson<string[]>(STORAGE_KEYS.LIKES, [])
   );
   const [savedIds, setSavedIds] = useState<string[]>(() =>
     loadJson<string[]>(STORAGE_KEYS.SAVED, [])
+  );
+  const [compareIds, setCompareIds] = useState<string[]>(() =>
+    loadJson<string[]>(STORAGE_KEYS.COMPARE, [])
+  );
+  const [userRatings, setUserRatings] = useState<Record<string, number>>(() =>
+    loadJson<Record<string, number>>(STORAGE_KEYS.RATINGS, {})
+  );
+  const [reviewsByProgram, setReviewsByProgram] = useState<Record<string, ProgramReview[]>>(() =>
+    loadJson<Record<string, ProgramReview[]>>(STORAGE_KEYS.REVIEWS, {})
   );
 
   const [isDark, setIsDark] = useState<boolean>(() => {
@@ -82,6 +106,8 @@ export default function App() {
   const [selectedOSList, setSelectedOSList] = useState<OperatingSystem[]>([]);
   const [selectedFeatures, setSelectedFeatures] = useState<FeatureTag[]>([]);
   const [onlyBimTutorials, setOnlyBimTutorials] = useState(false);
+  const [onlyArabicOrigin, setOnlyArabicOrigin] = useState(false);
+  const [onlyGithub, setOnlyGithub] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>('popular');
   const [viewMode, setViewMode] = useState<DirectoryViewMode>('alternatives');
 
@@ -91,6 +117,7 @@ export default function App() {
   );
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isToolkitOpen, setIsToolkitOpen] = useState(false);
+  const [isCompareOpen, setIsCompareOpen] = useState(false);
 
   // Sync URL hash for program pages
   useEffect(() => {
@@ -135,6 +162,18 @@ export default function App() {
   }, [savedIds]);
 
   useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.COMPARE, JSON.stringify(compareIds));
+  }, [compareIds]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.RATINGS, JSON.stringify(userRatings));
+  }, [userRatings]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.REVIEWS, JSON.stringify(reviewsByProgram));
+  }, [reviewsByProgram]);
+
+  useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.CUSTOM_ENTRIES, JSON.stringify(customEntries));
   }, [customEntries]);
 
@@ -146,26 +185,79 @@ export default function App() {
     localStorage.setItem(STORAGE_KEYS.CUSTOM_BIM_LINKS, JSON.stringify(customBimByProgram));
   }, [customBimByProgram]);
 
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.DOWNLOAD_URLS, JSON.stringify(customDownloadsByProgram));
+  }, [customDownloadsByProgram]);
+
   const likedAltSet = useMemo(() => new Set(likedIds), [likedIds]);
   const savedAltSet = useMemo(() => new Set(savedIds), [savedIds]);
+  const compareIdSet = useMemo(() => new Set(compareIds), [compareIds]);
 
-  // Merge base catalog + user entries + user alternatives + live like increments + user BIM Arabia links
+  // Merge base catalog + user entries + user alternatives + live like increments + live star ratings + user BIM Arabia links
   const catalog: SoftwareEntry[] = useMemo(() => {
     const mergedBase = [...customEntries, ...INITIAL_SOFTWARE_CATALOG];
     return mergedBase.map((entry) => {
       const extraAlts = customAltsBySoftware[entry.id] ?? [];
-      const allAlts = [...entry.alternatives, ...extraAlts].map((alt) => ({
-        ...alt,
-        likes: alt.likes + (likedAltSet.has(alt.id) ? 1 : 0),
-        bimArabiaTutorial: customBimByProgram[alt.id] ?? alt.bimArabiaTutorial,
-      }));
+      const allAlts = [...entry.alternatives, ...extraAlts].map((alt) => {
+        const likes = alt.likes + (likedAltSet.has(alt.id) ? 1 : 0);
+        const baseAlt = getBaseRating(alt.id, alt.likes, 'alternative', alt.isBestFree);
+        const altUserRating = userRatings[alt.id];
+        const altRated = applyUserRating(
+          alt.rating ?? baseAlt.rating,
+          alt.ratingCount ?? baseAlt.ratingCount,
+          altUserRating
+        );
+
+        return {
+          ...alt,
+          likes,
+          downloadUrl: resolveProgramDownloadUrl(
+            alt.id,
+            alt.websiteUrl,
+            customDownloadsByProgram[alt.id] ?? alt.downloadUrl
+          ),
+          githubUrl: resolveProgramGithubUrl(alt.id, alt.githubUrl),
+          rating: altRated.average,
+          ratingCount: altRated.count,
+          userRating: altUserRating,
+          bimArabiaTutorial:
+            customBimByProgram[alt.id] ?? resolveBimArabiaTutorial(alt.id, alt.bimArabiaTutorial),
+        };
+      });
+
+      const topBaseLikes = Math.max(...entry.alternatives.map((a) => a.likes), 0);
+      const baseCom = getBaseRating(entry.id, topBaseLikes, 'commercial');
+      const comUserRating = userRatings[entry.id];
+      const comRated = applyUserRating(
+        entry.rating ?? baseCom.rating,
+        entry.ratingCount ?? baseCom.ratingCount,
+        comUserRating
+      );
+
       return {
         ...entry,
-        bimArabiaTutorial: customBimByProgram[entry.id] ?? entry.bimArabiaTutorial,
+        downloadUrl: resolveProgramDownloadUrl(
+          entry.id,
+          entry.websiteUrl,
+          customDownloadsByProgram[entry.id] ?? entry.downloadUrl
+        ),
+        githubUrl: resolveProgramGithubUrl(entry.id, entry.githubUrl),
+        rating: comRated.average,
+        ratingCount: comRated.count,
+        userRating: comUserRating,
+        bimArabiaTutorial:
+          customBimByProgram[entry.id] ?? resolveBimArabiaTutorial(entry.id, entry.bimArabiaTutorial),
         alternatives: allAlts,
       };
     });
-  }, [customEntries, customAltsBySoftware, customBimByProgram, likedAltSet]);
+  }, [
+    customEntries,
+    customAltsBySoftware,
+    customBimByProgram,
+    customDownloadsByProgram,
+    likedAltSet,
+    userRatings,
+  ]);
 
   const unifiedPrograms = useMemo(() => buildUnifiedProgramIndex(catalog), [catalog]);
 
@@ -202,6 +294,20 @@ export default function App() {
         Boolean(entry.bimArabiaTutorial?.hasTutorial) ||
         entry.alternatives.some((alt) => Boolean(alt.bimArabiaTutorial?.hasTutorial));
       if (onlyBimTutorials && !hasBimTutorial) {
+        return false;
+      }
+
+      const hasArabicOrigin =
+        Boolean(entry.isArabicOrigin) ||
+        entry.alternatives.some((alt) => Boolean(alt.isArabicOrigin));
+      if (onlyArabicOrigin && !hasArabicOrigin) {
+        return false;
+      }
+
+      const hasGithubRepo =
+        Boolean(resolveProgramGithubUrl(entry.id, entry.githubUrl)) ||
+        entry.alternatives.some((alt) => Boolean(resolveProgramGithubUrl(alt.id, alt.githubUrl)));
+      if (onlyGithub && !hasGithubRepo) {
         return false;
       }
 
@@ -248,6 +354,11 @@ export default function App() {
     });
 
     return [...filtered].sort((a, b) => {
+      if (sortBy === 'highest-rated') {
+        const aTopRating = Math.max(...a.alternatives.map((x) => x.rating ?? 0), 0);
+        const bTopRating = Math.max(...b.alternatives.map((x) => x.rating ?? 0), 0);
+        if (bTopRating !== aTopRating) return bTopRating - aTopRating;
+      }
       if (sortBy === 'bim-first') {
         const aHas =
           Boolean(a.bimArabiaTutorial?.hasTutorial) ||
@@ -274,6 +385,8 @@ export default function App() {
     selectedOSList,
     selectedFeatures,
     onlyBimTutorials,
+    onlyArabicOrigin,
+    onlyGithub,
     sortBy,
   ]);
 
@@ -291,6 +404,14 @@ export default function App() {
       }
 
       if (onlyBimTutorials && !prog.bimArabiaTutorial?.hasTutorial) {
+        return false;
+      }
+
+      if (onlyArabicOrigin && !prog.isArabicOrigin) {
+        return false;
+      }
+
+      if (onlyGithub && !prog.githubUrl) {
         return false;
       }
 
@@ -316,6 +437,9 @@ export default function App() {
     });
 
     return [...filtered].sort((a, b) => {
+      if (sortBy === 'highest-rated') {
+        if (b.rating !== a.rating) return b.rating - a.rating;
+      }
       if (sortBy === 'bim-first') {
         const aHas = Boolean(a.bimArabiaTutorial?.hasTutorial);
         const bHas = Boolean(b.bimArabiaTutorial?.hasTutorial);
@@ -331,6 +455,8 @@ export default function App() {
     selectedOSList,
     selectedFeatures,
     onlyBimTutorials,
+    onlyArabicOrigin,
+    onlyGithub,
     sortBy,
   ]);
 
@@ -339,11 +465,9 @@ export default function App() {
     [unifiedPrograms, activeProgramId]
   );
 
-  const relatedPrograms = useMemo(() => {
+  const similarPrograms = useMemo(() => {
     if (!activeProgram) return [];
-    return unifiedPrograms
-      .filter((p) => p.category === activeProgram.category && p.id !== activeProgram.id)
-      .slice(0, 6);
+    return getSimilarPrograms(activeProgram, unifiedPrograms, 6);
   }, [unifiedPrograms, activeProgram]);
 
   const savedItems = useMemo(() => {
@@ -364,7 +488,9 @@ export default function App() {
     selectedLicense !== 'all' ||
     selectedOSList.length > 0 ||
     selectedFeatures.length > 0 ||
-    onlyBimTutorials;
+    onlyBimTutorials ||
+    onlyArabicOrigin ||
+    onlyGithub;
 
   const handleResetFilters = () => {
     setSearchQuery('');
@@ -373,6 +499,8 @@ export default function App() {
     setSelectedOSList([]);
     setSelectedFeatures([]);
     setOnlyBimTutorials(false);
+    setOnlyArabicOrigin(false);
+    setOnlyGithub(false);
     setSortBy('popular');
   };
 
@@ -407,6 +535,59 @@ export default function App() {
     );
   };
 
+  const handleToggleCompare = (programId: string) => {
+    setCompareIds((prev) => {
+      if (prev.includes(programId)) {
+        return prev.filter((id) => id !== programId);
+      }
+      if (prev.length >= 5) {
+        return [...prev.slice(1), programId];
+      }
+      return [...prev, programId];
+    });
+  };
+
+  const handleRateProgram = (programId: string, stars: number) => {
+    setUserRatings((prev) => ({
+      ...prev,
+      [programId]: stars,
+    }));
+  };
+
+  const handleAddReview = (
+    programId: string,
+    review: { authorName: string; rating: number; comment: string }
+  ) => {
+    const newReview: ProgramReview = {
+      id: `rev-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      programId,
+      authorName: review.authorName,
+      rating: review.rating,
+      comment: review.comment,
+      createdAt: new Date().toISOString(),
+    };
+
+    setReviewsByProgram((prev) => ({
+      ...prev,
+      [programId]: [newReview, ...(prev[programId] ?? [])],
+    }));
+
+    setUserRatings((prev) => ({
+      ...prev,
+      [programId]: review.rating,
+    }));
+  };
+
+  const handleDeleteReview = (programId: string, reviewId: string) => {
+    setReviewsByProgram((prev) => {
+      const existing = prev[programId] ?? [];
+      return {
+        ...prev,
+        [programId]: existing.filter((r) => r.id !== reviewId),
+      };
+    });
+  };
+
   const handleAddSoftware = (entry: SoftwareEntry) => {
     setCustomEntries((prev) => [entry, ...prev]);
     handleResetFilters();
@@ -434,6 +615,15 @@ export default function App() {
     setCustomBimByProgram((prev) => ({
       ...prev,
       [programId]: tutorial,
+    }));
+  };
+
+  const handleUpdateDownloadUrl = (programId: string, downloadUrl: string) => {
+    const cleanUrl = downloadUrl.trim();
+    if (!cleanUrl) return;
+    setCustomDownloadsByProgram((prev) => ({
+      ...prev,
+      [programId]: cleanUrl,
     }));
   };
 
@@ -465,15 +655,22 @@ export default function App() {
         {activeProgram ? (
           <ProgramPage
             program={activeProgram}
-            relatedPrograms={relatedPrograms}
+            similarPrograms={similarPrograms}
+            reviews={reviewsByProgram[activeProgram.id] ?? []}
             likedAltIds={likedAltSet}
             savedAltIds={savedAltSet}
+            compareIds={compareIdSet}
             onBack={closeProgramPage}
             onOpenProgramPage={openProgramPage}
             onToggleLike={handleToggleLike}
             onToggleSave={handleToggleSave}
+            onToggleCompare={handleToggleCompare}
+            onRateProgram={handleRateProgram}
+            onAddReview={handleAddReview}
+            onDeleteReview={handleDeleteReview}
             onAddAlternativeToSoftware={handleAddAlternativeToSoftware}
             onAttachBimTutorial={handleAttachBimTutorial}
+            onUpdateDownloadUrl={handleUpdateDownloadUrl}
           />
         ) : (
           <>
@@ -484,6 +681,8 @@ export default function App() {
               totalFreeAlternatives={stats.totalFreeAlternatives}
               totalBimTutorials={stats.totalBimTutorials}
               savedCount={savedItems.length}
+              programs={unifiedPrograms}
+              onSelectProgram={openProgramPage}
               onQuickSearch={(term) => {
                 setSearchQuery(term);
                 document.getElementById('directory')?.scrollIntoView({ behavior: 'smooth' });
@@ -501,12 +700,18 @@ export default function App() {
               onToggleFeature={handleToggleFeature}
               onlyBimTutorials={onlyBimTutorials}
               onToggleBimTutorials={() => setOnlyBimTutorials((v) => !v)}
+              onlyArabicOrigin={onlyArabicOrigin}
+              onToggleArabicOrigin={() => setOnlyArabicOrigin((v) => !v)}
+              onlyGithub={onlyGithub}
+              onToggleGithub={() => setOnlyGithub((v) => !v)}
               sortBy={sortBy}
               onSortChange={setSortBy}
               viewMode={viewMode}
               onViewModeChange={setViewMode}
               isDark={isDark}
               onToggleDark={() => setIsDark((v) => !v)}
+              compareCount={compareIds.length}
+              onOpenCompare={() => setIsCompareOpen(true)}
               resultCount={displayedCount}
               hasActiveFilters={hasActiveFilters}
               onResetFilters={handleResetFilters}
@@ -546,7 +751,10 @@ export default function App() {
                     <UnifiedProgramCard
                       key={item.id}
                       item={item}
+                      isCompared={compareIdSet.has(item.id)}
+                      onToggleCompare={handleToggleCompare}
                       onOpenProgramPage={openProgramPage}
+                      onRateProgram={handleRateProgram}
                     />
                   ))}
                 </div>
@@ -558,8 +766,11 @@ export default function App() {
                       entry={entry}
                       likedAltIds={likedAltSet}
                       savedAltIds={savedAltSet}
+                      compareIds={compareIdSet}
                       onToggleLike={(_swId, altId) => handleToggleLike(altId)}
                       onToggleSave={handleToggleSave}
+                      onToggleCompare={handleToggleCompare}
+                      onRateProgram={handleRateProgram}
                       onSelectSoftware={openProgramPage}
                     />
                   ))}
@@ -615,6 +826,44 @@ export default function App() {
         </div>
       </footer>
 
+      {/* Compact Single-Row Comparison Tray (visible only when >= 1 program selected) */}
+      {compareIds.length > 0 && !isCompareOpen && (
+        <div className="sticky bottom-0 z-30 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm">
+          <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 h-12 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0 text-xs sm:text-sm">
+              <ArrowLeftRight className="w-4 h-4 text-blue-700 dark:text-blue-400 shrink-0" />
+              <span className="font-semibold text-slate-900 dark:text-white whitespace-nowrap tabular-nums">
+                محدد للمقارنة ({compareIds.length}):
+              </span>
+              <span className="text-slate-600 dark:text-slate-300 truncate">
+                {compareIds
+                  .map((id) => unifiedPrograms.find((p) => p.id === id)?.name)
+                  .filter(Boolean)
+                  .join(' · ')}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsCompareOpen(true)}
+                className="px-3.5 py-1.5 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer"
+              >
+                {compareIds.length >= 2 ? 'عرض جدول المقارنة' : 'أضف برنامجاً ثانياً'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setCompareIds([])}
+                aria-label="مسح قائمة المقارنة"
+                className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <AddEntryModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
@@ -627,6 +876,19 @@ export default function App() {
         savedItems={savedItems}
         onRemoveSaved={(altId) => handleToggleSave(altId)}
         onOpenSoftware={(softwareId) => openProgramPage(softwareId)}
+      />
+
+      <CompareModal
+        isOpen={isCompareOpen}
+        onClose={() => setIsCompareOpen(false)}
+        selectedPrograms={compareIds
+          .map((id) => unifiedPrograms.find((p) => p.id === id))
+          .filter((p): p is NonNullable<typeof p> => Boolean(p))}
+        allPrograms={unifiedPrograms}
+        onAddProgram={(programId) => handleToggleCompare(programId)}
+        onRemoveProgram={(programId) => handleToggleCompare(programId)}
+        onClearAll={() => setCompareIds([])}
+        onOpenProgramPage={openProgramPage}
       />
     </div>
   );

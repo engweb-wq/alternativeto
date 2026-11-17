@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { Youtube, ExternalLink, PlayCircle } from 'lucide-react';
-import { BIM_ARABIA_CHANNEL_URL, BIM_ARABIA_PLAYLIST_TOPICS } from '../data/catalog';
+import {
+  BIM_ARABIA_BEST_ALTERNATIVES_URL,
+  BIM_ARABIA_CHANNEL_URL,
+  BIM_ARABIA_PLAYLIST_TOPICS,
+} from '../data/catalog';
 
 interface BimArabiaSectionProps {
   onFilterBimOnly: () => void;
@@ -24,15 +28,26 @@ export const BimArabiaSection: React.FC<BimArabiaSectionProps> = ({ onFilterBimO
               تعلّم البرامج الهندسية وبدائلها المفتوحة باللغة العربية
             </h2>
             <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
-              يربط الدليل كل برنامج هندسي أو بديل مجاني بالشروحات العربية المتوفرة على قناة بيم أرابيا للمهندس عمر سليم على يوتيوب، لتنتقل مباشرة من اختيار الأداة إلى التطبيق العملي في مشاريع الـ BIM والعمارة وإدارة المشاريع.
+              يربط الدليل كل برنامج هندسي أو بديل مجاني بالشروحات العربية المتوفرة على قناة بيم أرابيا للمهندس عمر سليم على يوتيوب، بما في ذلك سلسلة «أفضل البدائل» المخصصة للبرمجيات المجانية ومفتوحة المصدر.
             </p>
 
             <div className="flex flex-wrap items-center gap-3">
               <a
-                href={BIM_ARABIA_CHANNEL_URL}
+                href={BIM_ARABIA_BEST_ALTERNATIVES_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-red-700 hover:bg-red-800 text-white text-sm font-semibold transition-colors whitespace-nowrap shrink-0"
+              >
+                <PlayCircle className="w-4 h-4" />
+                <span>سلسلة «أفضل البدائل» على يوتيوب</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+
+              <a
+                href={BIM_ARABIA_CHANNEL_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50/70 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-950/50 text-red-800 dark:text-red-300 text-sm font-semibold transition-colors whitespace-nowrap shrink-0"
               >
                 <Youtube className="w-4 h-4" />
                 <span>زيارة قناة بيم أرابيا</span>
@@ -70,7 +85,7 @@ export const BimArabiaSection: React.FC<BimArabiaSectionProps> = ({ onFilterBimO
               )}
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/85 via-slate-950/40 to-transparent p-5">
                 <p className="text-xs text-slate-200 font-medium">
-                  شروحات عملية في Revit و Navisworks و OpenBIM و BlenderBIM و FreeCAD
+                  سلسلة «أفضل البدائل» · Revit · Navisworks · Civil 3D · ArchiCAD · Solibri · Speckle · FreeCAD
                 </p>
               </div>
             </div>
@@ -78,14 +93,18 @@ export const BimArabiaSection: React.FC<BimArabiaSectionProps> = ({ onFilterBimO
         </div>
 
         {/* Curated BIM Arabia Topic Links */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {BIM_ARABIA_PLAYLIST_TOPICS.map((topic) => (
             <a
               key={topic.query}
               href={topic.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="group p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/70 hover:bg-white dark:hover:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700 transition-colors flex flex-col justify-between gap-3"
+              className={`group p-5 rounded-xl border transition-colors flex flex-col justify-between gap-3 ${
+                topic.isFeaturedSeries
+                  ? 'border-red-200 dark:border-red-900/60 bg-red-50/40 dark:bg-red-950/20 hover:bg-red-50/80 dark:hover:bg-red-950/35'
+                  : 'border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/70 hover:bg-white dark:hover:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700'
+              }`}
             >
               <div>
                 <div className="flex items-center justify-between gap-2 mb-2">
@@ -102,7 +121,7 @@ export const BimArabiaSection: React.FC<BimArabiaSectionProps> = ({ onFilterBimO
                 </p>
               </div>
               <span className="text-xs font-semibold text-blue-700 dark:text-blue-400 group-hover:underline underline-offset-4">
-                فتح نتائج الشرح على يوتيوب
+                {topic.isFeaturedSeries ? 'مشاهدة قائمة التشغيل على يوتيوب' : 'فتح نتائج الشرح على يوتيوب'}
               </span>
             </a>
           ))}

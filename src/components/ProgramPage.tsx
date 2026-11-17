@@ -1,67 +1,108 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ArrowRight,
   ArrowUpLeft,
   Bookmark,
   Check,
   CheckCircle2,
+  Download,
   ExternalLink,
   Plus,
   ThumbsUp,
   Youtube,
   Search,
+  ArrowLeftRight,
+  Github,
 } from 'lucide-react';
-import { BIM_ARABIA_CHANNEL_URL, CATEGORIES } from '../data/catalog';
+import {
+  BIM_ARABIA_BEST_ALTERNATIVES_URL,
+  BIM_ARABIA_CHANNEL_URL,
+  CATEGORIES,
+} from '../data/catalog';
 import {
   BimArabiaTutorial,
   FreeAlternative,
   LicenseType,
   OperatingSystem,
+  ProgramReview,
   UnifiedProgramItem,
 } from '../types/software';
+import { StarRating } from './StarRating';
+import { ShareButton } from './ShareButton';
+import { ProgramReviews } from './ProgramReviews';
+import { SimilarProgramRecommendation } from '../utils/recommendations';
 
 interface ProgramPageProps {
   program: UnifiedProgramItem;
-  relatedPrograms: UnifiedProgramItem[];
+  similarPrograms: SimilarProgramRecommendation[];
+  reviews: ProgramReview[];
   likedAltIds: Set<string>;
   savedAltIds: Set<string>;
+  compareIds: Set<string>;
   onBack: () => void;
   onOpenProgramPage: (programId: string) => void;
   onToggleLike: (altId: string) => void;
   onToggleSave: (altId: string) => void;
+  onToggleCompare: (programId: string) => void;
+  onRateProgram: (programId: string, stars: number) => void;
+  onAddReview: (
+    programId: string,
+    review: { authorName: string; rating: number; comment: string }
+  ) => void;
+  onDeleteReview: (programId: string, reviewId: string) => void;
   onAddAlternativeToSoftware: (
     softwareId: string,
     newAlt: Omit<FreeAlternative, 'id' | 'likes' | 'isBestFree'>
   ) => void;
   onAttachBimTutorial: (programId: string, tutorial: BimArabiaTutorial) => void;
+  onUpdateDownloadUrl: (programId: string, downloadUrl: string) => void;
 }
 
 export const ProgramPage: React.FC<ProgramPageProps> = ({
   program,
-  relatedPrograms,
+  similarPrograms,
+  reviews,
   likedAltIds,
   savedAltIds,
+  compareIds,
   onBack,
   onOpenProgramPage,
   onToggleLike,
   onToggleSave,
+  onToggleCompare,
+  onRateProgram,
+  onAddReview,
+  onDeleteReview,
   onAddAlternativeToSoftware,
   onAttachBimTutorial,
+  onUpdateDownloadUrl,
 }) => {
   const [compareAltId, setCompareAltId] = useState<string | null>(null);
   const [showSuggestForm, setShowSuggestForm] = useState(false);
   const [showBimAttachForm, setShowBimAttachForm] = useState(false);
+  const [showDownloadEdit, setShowDownloadEdit] = useState(false);
+  const [downloadDraft, setDownloadDraft] = useState(program.downloadUrl ?? program.websiteUrl);
+  const [downloadSavedNotice, setDownloadSavedNotice] = useState(false);
 
   // Suggest alternative state
   const [altName, setAltName] = useState('');
   const [altTagline, setAltTagline] = useState('');
   const [altLicense, setAltLicense] = useState<LicenseType>('مفتوح المصدر');
   const [altUrl, setAltUrl] = useState('');
+  const [altDownloadUrl, setAltDownloadUrl] = useState('');
   const [altPlatforms, setAltPlatforms] = useState<OperatingSystem[]>(['Windows']);
 
   // Attach BIM Arabia video state
   const [bimVideoUrl, setBimVideoUrl] = useState('');
   const [bimVideoTitle, setBimVideoTitle] = useState('');
+
+  const resolvedDownloadUrl = program.downloadUrl ?? program.websiteUrl;
+
+  useEffect(() => {
+    setDownloadDraft(program.downloadUrl ?? program.websiteUrl);
+    setShowDownloadEdit(false);
+    setDownloadSavedNotice(false);
+  }, [program.id, program.downloadUrl, program.websiteUrl]);
 
   const categoryLabel = CATEGORIES.find((c) => c.id === program.category)?.label ?? program.category;
   const commercial = program.commercialEntry;
@@ -97,6 +138,7 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
       platforms: altPlatforms,
       features: commercial.features,
       websiteUrl: altUrl.trim() || 'https://alternativeto.net/',
+      downloadUrl: altDownloadUrl.trim() || altUrl.trim() || 'https://alternativeto.net/',
       keyAdvantages: ['مقترح من مجتمع بديلك'],
       fileFormats: commercial.fileFormats,
       arabicSupport: 'جيد',
@@ -105,7 +147,18 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
     setAltName('');
     setAltTagline('');
     setAltUrl('');
+    setAltDownloadUrl('');
     setShowSuggestForm(false);
+  };
+
+  const handleSaveDownloadSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleaned = downloadDraft.trim();
+    if (!cleaned) return;
+    onUpdateDownloadUrl(program.id, cleaned);
+    setShowDownloadEdit(false);
+    setDownloadSavedNotice(true);
+    setTimeout(() => setDownloadSavedNotice(false), 2600);
   };
 
   const handleAttachBimSubmit = (e: React.FormEvent) => {
@@ -188,6 +241,16 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                       ·
                     </span>
                     <span className="text-slate-500 dark:text-slate-400">{program.licenseLabel}</span>
+                    {program.isArabicOrigin && (
+                      <>
+                        <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
+                          ·
+                        </span>
+                        <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+                          {program.originLabel ?? 'بديل عربي'}
+                        </span>
+                      </>
+                    )}
                   </div>
                   <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
                     {program.name}
@@ -198,7 +261,27 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <ShareButton
+                  programId={program.id}
+                  programName={program.name}
+                  programSummary={program.shortSummary}
+                />
+
+                <button
+                  type="button"
+                  onClick={() => onToggleCompare(program.id)}
+                  aria-pressed={compareIds.has(program.id)}
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
+                    compareIds.has(program.id)
+                      ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-300 dark:border-blue-800 text-blue-700 dark:text-blue-300'
+                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  <ArrowLeftRight className="w-4 h-4" />
+                  <span>{compareIds.has(program.id) ? 'مضاف للمقارنة' : 'أضف للمقارنة'}</span>
+                </button>
+
                 {program.kind === 'alternative' && (
                   <>
                     <button
@@ -232,15 +315,69 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                 )}
 
                 <a
+                  href={resolvedDownloadUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 ${
+                    program.licenseCategory === 'مدفوع'
+                      ? 'bg-blue-700 hover:bg-blue-800'
+                      : 'bg-emerald-700 hover:bg-emerald-800'
+                  }`}
+                >
+                  <Download className="w-4 h-4" />
+                  <span>تحميل</span>
+                </a>
+
+                {program.githubUrl && (
+                  <a
+                    href={program.githubUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-100 text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap shrink-0"
+                  >
+                    <Github className="w-4 h-4" />
+                    <span>GitHub</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
+
+                <a
                   href={program.websiteUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900 text-xs sm:text-sm font-semibold transition-colors"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900 text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap shrink-0"
                 >
                   <span>الموقع الرسمي</span>
                   <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               </div>
+            </div>
+
+            {/* Interactive 1-5 Star Rating Bar */}
+            <div className="py-3 border-y border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
+              <StarRating
+                average={program.rating}
+                count={program.ratingCount}
+                userRating={program.userRating}
+                onRate={(stars) => onRateProgram(program.id, stars)}
+                size="md"
+                label="تقييم المستخدمين (اضغط للتقييم من 1 إلى 5 نجوم):"
+              />
+
+              <button
+                type="button"
+                onClick={() => {
+                  const el = document.getElementById('program-reviews');
+                  el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  const textarea = document.getElementById(`review-comment-${program.id}`);
+                  if (textarea instanceof HTMLTextAreaElement) {
+                    setTimeout(() => textarea.focus(), 300);
+                  }
+                }}
+                className="text-xs font-semibold text-blue-700 dark:text-blue-400 hover:underline whitespace-nowrap shrink-0 cursor-pointer tabular-nums"
+              >
+                اكتب مراجعة قصيرة ({reviews.length})
+              </button>
             </div>
 
             <p className="text-base text-slate-700 dark:text-slate-300 leading-relaxed">
@@ -267,6 +404,79 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                   {program.fileFormats.join(', ')}
                 </p>
               </div>
+            </div>
+
+            {/* Official / Open-Source Download Source Strip (Stored in Program State) */}
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">
+                    {program.licenseCategory === 'مدفوع'
+                      ? 'مصدر التحميل الرسمي / النسخة التجريبية'
+                      : 'مصدر التحميل الرسمي أو مفتوح المصدر'}
+                  </p>
+                  <a
+                    href={resolvedDownloadUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    dir="ltr"
+                    className="font-mono text-xs sm:text-sm text-blue-700 dark:text-blue-400 hover:underline truncate block max-w-full"
+                  >
+                    {resolvedDownloadUrl}
+                  </a>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setShowDownloadEdit((v) => !v)}
+                    className="text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-blue-700 dark:hover:text-blue-400 hover:underline cursor-pointer whitespace-nowrap"
+                  >
+                    {showDownloadEdit ? 'إغلاق التعديل' : 'تحديث رابط التحميل'}
+                  </button>
+
+                  <a
+                    href={resolvedDownloadUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-white text-xs font-semibold transition-colors whitespace-nowrap ${
+                      program.licenseCategory === 'مدفوع'
+                        ? 'bg-blue-700 hover:bg-blue-800'
+                        : 'bg-emerald-700 hover:bg-emerald-800'
+                    }`}
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>تحميل مباشر</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              </div>
+
+              {downloadSavedNotice && (
+                <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                  تم تحديث وحفظ رابط التحميل الرسمي في حالة البرنامج.
+                </p>
+              )}
+
+              {showDownloadEdit && (
+                <form onSubmit={handleSaveDownloadSubmit} className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="url"
+                    required
+                    dir="ltr"
+                    value={downloadDraft}
+                    onChange={(e) => setDownloadDraft(e.target.value)}
+                    placeholder="https://..."
+                    className="flex-1 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs font-mono text-slate-900 dark:text-slate-100"
+                  />
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold cursor-pointer whitespace-nowrap shrink-0"
+                  >
+                    حفظ رابط التحميل
+                  </button>
+                </form>
+              )}
             </div>
 
             {program.kind === 'alternative' && program.alternativeEntry && (
@@ -366,7 +576,7 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                           الموقع الرسمي
@@ -379,22 +589,35 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                           className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-sm"
                         />
                       </div>
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        {(['Windows', 'macOS', 'Linux', 'Web'] as OperatingSystem[]).map((os) => (
-                          <button
-                            key={os}
-                            type="button"
-                            onClick={() => togglePlatform(os)}
-                            className={`px-2.5 py-1.5 rounded text-xs font-medium border cursor-pointer ${
-                              altPlatforms.includes(os)
-                                ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-400 text-blue-700 dark:text-blue-300'
-                                : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-700 text-slate-600'
-                            }`}
-                          >
-                            {os}
-                          </button>
-                        ))}
+                      <div>
+                        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                          رابط التحميل المباشر (اختياري)
+                        </label>
+                        <input
+                          type="url"
+                          value={altDownloadUrl}
+                          onChange={(e) => setAltDownloadUrl(e.target.value)}
+                          placeholder="https://.../download"
+                          className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-sm"
+                        />
                       </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {(['Windows', 'macOS', 'Linux', 'Web'] as OperatingSystem[]).map((os) => (
+                        <button
+                          key={os}
+                          type="button"
+                          onClick={() => togglePlatform(os)}
+                          className={`px-2.5 py-1.5 rounded text-xs font-medium border cursor-pointer ${
+                            altPlatforms.includes(os)
+                              ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-400 text-blue-700 dark:text-blue-300'
+                              : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-700 text-slate-600'
+                          }`}
+                        >
+                          {os}
+                        </button>
+                      ))}
                     </div>
 
                     <div className="flex justify-end gap-2">
@@ -435,6 +658,14 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                             </span>
                             <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
                             <span className="text-slate-500 dark:text-slate-400">{alt.platforms.join(' / ')}</span>
+                            {alt.isArabicOrigin && (
+                              <>
+                                <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
+                                <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+                                  {alt.originLabel ?? 'بديل عربي'}
+                                </span>
+                              </>
+                            )}
                           </div>
 
                           <h3 className="font-display text-lg font-bold text-slate-900 dark:text-white">
@@ -477,6 +708,19 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                             {savedAltIds.has(alt.id) ? <Check className="w-3.5 h-3.5" /> : <Bookmark className="w-3.5 h-3.5" />}
                             <span>{savedAltIds.has(alt.id) ? 'محفوظ' : 'حفظ'}</span>
                           </button>
+
+                          <button
+                            type="button"
+                            onClick={() => onToggleCompare(alt.id)}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border cursor-pointer ${
+                              compareIds.has(alt.id)
+                                ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-300 dark:border-blue-800 text-blue-700 dark:text-blue-300'
+                                : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
+                            }`}
+                          >
+                            <ArrowLeftRight className="w-3.5 h-3.5" />
+                            <span>{compareIds.has(alt.id) ? 'في المقارنة' : 'قارن'}</span>
+                          </button>
                         </div>
                       </div>
 
@@ -484,7 +728,27 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                         {alt.description}
                       </p>
 
+                      <div>
+                        <StarRating
+                          average={alt.rating ?? 4.6}
+                          count={alt.ratingCount ?? 35}
+                          userRating={alt.userRating}
+                          onRate={(stars) => onRateProgram(alt.id, stars)}
+                          label="قيّم جودة البديل:"
+                        />
+                      </div>
+
                       <div className="flex flex-wrap items-center gap-3 pt-1">
+                        <a
+                          href={alt.downloadUrl ?? alt.websiteUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold transition-colors whitespace-nowrap shrink-0"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          <span>تحميل</span>
+                        </a>
+
                         <a
                           href={`#program/${alt.id}`}
                           onClick={(e) => {
@@ -496,6 +760,18 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                           <span>صفحة {alt.name}</span>
                           <ArrowUpLeft className="w-3.5 h-3.5" />
                         </a>
+
+                        {alt.githubUrl && (
+                          <a
+                            href={alt.githubUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-colors whitespace-nowrap shrink-0"
+                          >
+                            <Github className="w-3.5 h-3.5" />
+                            <span>GitHub</span>
+                          </a>
+                        )}
 
                         {alt.bimArabiaTutorial?.hasTutorial && (
                           <a
@@ -541,6 +817,15 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                       </thead>
                       <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                         <tr>
+                          <td className="py-3 px-4 font-medium">متوسط تقييم المستخدمين</td>
+                          <td className="py-3 px-4 tabular-nums">
+                            {(commercial.rating ?? program.rating).toFixed(1)} / 5 ({commercial.ratingCount ?? program.ratingCount} تقييم)
+                          </td>
+                          <td className="py-3 px-4 font-semibold text-emerald-700 dark:text-emerald-400 tabular-nums">
+                            {(activeCompareAlt.rating ?? 4.6).toFixed(1)} / 5 ({activeCompareAlt.ratingCount ?? 35} تقييم)
+                          </td>
+                        </tr>
+                        <tr>
                           <td className="py-3 px-4 font-medium">الترخيص</td>
                           <td className="py-3 px-4 text-slate-600 dark:text-slate-400">{commercial.pricingNote}</td>
                           <td className="py-3 px-4 text-emerald-700 dark:text-emerald-400 font-medium">
@@ -568,6 +853,121 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                 </div>
               )}
             </>
+          )}
+
+          {/* User Text Reviews Section */}
+          <ProgramReviews
+            programId={program.id}
+            programName={program.name}
+            averageRating={program.rating}
+            ratingCount={program.ratingCount}
+            userRating={program.userRating}
+            reviews={reviews}
+            onAddReview={onAddReview}
+            onDeleteReview={onDeleteReview}
+          />
+
+          {/* Similar Programs Recommendations Section */}
+          {similarPrograms.length > 0 && (
+            <section
+              aria-labelledby="similar-programs-heading"
+              className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-4"
+            >
+              <div>
+                <h2
+                  id="similar-programs-heading"
+                  className="font-display text-xl font-bold text-slate-900 dark:text-white mb-1"
+                >
+                  برامج مشابهة لـ {program.name}
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+                  اقتراحات مبنية على الفئات والميزات المشتركة لاكتشاف بدائل وأدوات إضافية مناسبة.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {similarPrograms.map(({ program: sim, reasonSummary }) => {
+                  const simCatLabel =
+                    CATEGORIES.find((c) => c.id === sim.category)?.label ?? sim.category;
+
+                  return (
+                    <article
+                      key={sim.id}
+                      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 flex flex-col justify-between gap-4 hover:border-slate-300 dark:hover:border-slate-700 transition-colors"
+                    >
+                      <div className="space-y-2.5">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div
+                              className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-mono text-xs font-semibold shrink-0"
+                              style={{ backgroundColor: sim.accentColor }}
+                              aria-hidden="true"
+                            >
+                              {sim.monogram}
+                            </div>
+                            <div className="min-w-0">
+                              <h3 className="font-display text-base font-bold text-slate-900 dark:text-white truncate">
+                                <a
+                                  href={`#program/${sim.id}`}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    onOpenProgramPage(sim.id);
+                                  }}
+                                  className="hover:text-blue-700 dark:hover:text-blue-400 transition-colors"
+                                >
+                                  {sim.name}
+                                </a>
+                              </h3>
+                              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                                {sim.arabicName} · {simCatLabel}
+                              </p>
+                            </div>
+                          </div>
+
+                          <span
+                            className={`text-xs font-semibold whitespace-nowrap shrink-0 ${
+                              sim.licenseCategory === 'مفتوح المصدر'
+                                ? 'text-emerald-700 dark:text-emerald-400'
+                                : sim.licenseCategory === 'مجاني'
+                                ? 'text-blue-700 dark:text-blue-400'
+                                : 'text-amber-700 dark:text-amber-400'
+                            }`}
+                          >
+                            {sim.licenseCategory}
+                          </span>
+                        </div>
+
+                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                          {sim.shortSummary}
+                        </p>
+
+                        <p className="text-xs font-medium text-blue-700 dark:text-blue-400">
+                          وجه التشابه: {reasonSummary}
+                        </p>
+                      </div>
+
+                      <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
+                        <span className="text-xs font-medium text-slate-600 dark:text-slate-300 tabular-nums">
+                          ★ {sim.rating.toFixed(1)} ({sim.ratingCount} تقييم)
+                        </span>
+
+                        <a
+                          href={`#program/${sim.id}`}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            onOpenProgramPage(sim.id);
+                          }}
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-slate-900 dark:text-white hover:text-blue-700 dark:hover:text-blue-400 transition-colors whitespace-nowrap shrink-0"
+                        >
+                          <span>صفحة البرنامج</span>
+                          <ArrowUpLeft className="w-3.5 h-3.5" />
+                        </a>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
           )}
         </div>
 
@@ -630,6 +1030,19 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
             )}
 
             <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
+              <a
+                href={BIM_ARABIA_BEST_ALTERNATIVES_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-700 dark:text-red-400 hover:underline"
+              >
+                <Youtube className="w-3.5 h-3.5 shrink-0" />
+                <span>تصفح سلسلة «أفضل البدائل» على قناة بيم أرابيا</span>
+                <ExternalLink className="w-3 h-3 shrink-0" />
+              </a>
+            </div>
+
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
               <button
                 type="button"
                 onClick={() => setShowBimAttachForm((v) => !v)}
@@ -668,14 +1081,14 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
             </div>
           </div>
 
-          {/* Related Programs in same category */}
-          {relatedPrograms.length > 0 && (
+          {/* Quick Summary of Similar Programs in Sidebar */}
+          {similarPrograms.length > 0 && (
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-3">
               <h2 className="font-display text-base font-bold text-slate-900 dark:text-white">
-                برامج أخرى في فئة {categoryLabel}
+                وصول سريع لبرامج مشابهة
               </h2>
               <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-                {relatedPrograms.map((rel) => (
+                {similarPrograms.slice(0, 4).map(({ program: rel, sharedFeatures }) => (
                   <li key={rel.id} className="py-2.5 flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <a
@@ -688,8 +1101,9 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                       >
                         {rel.name}
                       </a>
-                      <span className="text-xs text-slate-500 dark:text-slate-400">
-                        {rel.licenseCategory}
+                      <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums truncate block">
+                        {rel.licenseCategory} · ★ {rel.rating.toFixed(1)}
+                        {sharedFeatures.length > 0 ? ` · ${sharedFeatures[0]}` : ''}
                       </span>
                     </div>
                     <a

@@ -21,6 +21,7 @@ export const AddEntryModal: React.FC<AddEntryModalProps> = ({ isOpen, onClose, o
   const [vendor, setVendor] = useState('');
   const [category, setCategory] = useState<SoftwareCategory>('bim-engineering');
   const [shortSummary, setShortSummary] = useState('');
+  const [downloadUrl, setDownloadUrl] = useState('');
   const [bimTutorialUrl, setBimTutorialUrl] = useState('');
   const [selectedFeatures, setSelectedFeatures] = useState<FeatureTag[]>(['دعم العربية']);
 
@@ -29,6 +30,7 @@ export const AddEntryModal: React.FC<AddEntryModalProps> = ({ isOpen, onClose, o
   const [altTagline, setAltTagline] = useState('');
   const [altLicense, setAltLicense] = useState<LicenseType>('مفتوح المصدر');
   const [altWebsite, setAltWebsite] = useState('');
+  const [altDownloadUrl, setAltDownloadUrl] = useState('');
   const [altPlatforms, setAltPlatforms] = useState<OperatingSystem[]>(['Windows', 'macOS', 'Linux']);
 
   if (!isOpen) return null;
@@ -70,7 +72,8 @@ export const AddEntryModal: React.FC<AddEntryModalProps> = ({ isOpen, onClose, o
         `قائمة بأفضل البدائل المجانية ومفتوحة المصدر لبرنامج ${name.trim()}.`,
       fileFormats: ['Standard'],
       arabicSupport: 'جيد',
-      websiteUrl: 'https://alternativeto.net/',
+      websiteUrl: downloadUrl.trim() || 'https://alternativeto.net/',
+      downloadUrl: downloadUrl.trim() || 'https://alternativeto.net/',
       accentColor: '#1D4ED8',
       monogram,
       isUserSubmitted: true,
@@ -94,7 +97,8 @@ export const AddEntryModal: React.FC<AddEntryModalProps> = ({ isOpen, onClose, o
           licenseCode: altLicense === 'مفتوح المصدر' ? 'Open Source' : 'Freeware',
           platforms: altPlatforms,
           features: featuresList,
-          websiteUrl: altWebsite.trim() || 'https://alternativeto.net/',
+          websiteUrl: altWebsite.trim() || altDownloadUrl.trim() || 'https://alternativeto.net/',
+          downloadUrl: altDownloadUrl.trim() || altWebsite.trim() || 'https://alternativeto.net/',
           isBestFree: true,
           likes: 1,
           keyAdvantages: [altTagline.trim()],
@@ -110,10 +114,12 @@ export const AddEntryModal: React.FC<AddEntryModalProps> = ({ isOpen, onClose, o
     setArabicName('');
     setVendor('');
     setShortSummary('');
+    setDownloadUrl('');
     setBimTutorialUrl('');
     setAltName('');
     setAltTagline('');
     setAltWebsite('');
+    setAltDownloadUrl('');
     onClose();
   };
 
@@ -223,17 +229,31 @@ export const AddEntryModal: React.FC<AddEntryModalProps> = ({ isOpen, onClose, o
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                رابط الشرح في قناة بيم أرابيا (اختياري)
-              </label>
-              <input
-                type="url"
-                value={bimTutorialUrl}
-                onChange={(e) => setBimTutorialUrl(e.target.value)}
-                placeholder="https://www.youtube.com/@omar_selim1/..."
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-white"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  رابط التحميل أو الموقع الرسمي (اختياري)
+                </label>
+                <input
+                  type="url"
+                  value={downloadUrl}
+                  onChange={(e) => setDownloadUrl(e.target.value)}
+                  placeholder="https://..."
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  رابط الشرح في قناة بيم أرابيا (اختياري)
+                </label>
+                <input
+                  type="url"
+                  value={bimTutorialUrl}
+                  onChange={(e) => setBimTutorialUrl(e.target.value)}
+                  placeholder="https://www.youtube.com/@omar_selim1/..."
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-white"
+                />
+              </div>
             </div>
 
             <div className="space-y-1.5">
@@ -308,17 +328,31 @@ export const AddEntryModal: React.FC<AddEntryModalProps> = ({ isOpen, onClose, o
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                رابط الموقع الرسمي للبديل
-              </label>
-              <input
-                type="url"
-                value={altWebsite}
-                onChange={(e) => setAltWebsite(e.target.value)}
-                placeholder="https://..."
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-white"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  رابط الموقع الرسمي للبديل
+                </label>
+                <input
+                  type="url"
+                  value={altWebsite}
+                  onChange={(e) => setAltWebsite(e.target.value)}
+                  placeholder="https://..."
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  رابط التحميل المباشر للبديل (اختياري)
+                </label>
+                <input
+                  type="url"
+                  value={altDownloadUrl}
+                  onChange={(e) => setAltDownloadUrl(e.target.value)}
+                  placeholder="https://.../download"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-white"
+                />
+              </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">

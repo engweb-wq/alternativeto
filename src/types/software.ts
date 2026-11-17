@@ -1,5 +1,6 @@
 export type SoftwareCategory =
   | 'bim-engineering'
+  | 'ai-tools'
   | 'design'
   | 'productivity'
   | 'development'
@@ -20,6 +21,7 @@ export type FeatureTag =
   | 'رسم 2D / DWG'
   | 'نمذجة 3D'
   | 'إظهار معماري'
+  | 'ذكاء اصطناعي'
   | 'دعم العربية'
   | 'إدارة مشاريع'
   | 'أتمتة وبرمجة'
@@ -49,11 +51,18 @@ export interface FreeAlternative {
   platforms: OperatingSystem[];
   features: FeatureTag[];
   websiteUrl: string;
+  downloadUrl?: string;
+  githubUrl?: string;
   isBestFree: boolean;
   likes: number;
+  rating?: number;
+  ratingCount?: number;
+  userRating?: number;
   keyAdvantages: string[];
   fileFormats: string[];
   arabicSupport: 'ممتاز' | 'جيد' | 'محدود';
+  isArabicOrigin?: boolean;
+  originLabel?: string;
   bimArabiaTutorial?: BimArabiaTutorial;
 }
 
@@ -72,8 +81,15 @@ export interface SoftwareEntry {
   fileFormats: string[];
   arabicSupport: 'ممتاز' | 'جيد' | 'محدود';
   websiteUrl: string;
+  downloadUrl?: string;
+  githubUrl?: string;
   accentColor: string;
   monogram: string;
+  rating?: number;
+  ratingCount?: number;
+  userRating?: number;
+  isArabicOrigin?: boolean;
+  originLabel?: string;
   bimArabiaTutorial?: BimArabiaTutorial;
   alternatives: FreeAlternative[];
   isUserSubmitted?: boolean;
@@ -95,9 +111,16 @@ export interface UnifiedProgramItem {
   fileFormats: string[];
   arabicSupport: 'ممتاز' | 'جيد' | 'محدود';
   websiteUrl: string;
+  downloadUrl?: string;
+  githubUrl?: string;
   accentColor: string;
   monogram: string;
   likes: number;
+  rating: number;
+  ratingCount: number;
+  userRating?: number;
+  isArabicOrigin?: boolean;
+  originLabel?: string;
   bimArabiaTutorial?: BimArabiaTutorial;
   parentCommercial?: SoftwareEntry;
   commercialEntry?: SoftwareEntry;
@@ -108,4 +131,13 @@ export interface CategoryMeta {
   id: SoftwareCategory;
   label: string;
   description: string;
+}
+
+export interface ProgramReview {
+  id: string;
+  programId: string;
+  authorName: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
 }
