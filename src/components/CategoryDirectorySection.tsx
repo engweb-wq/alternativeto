@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { ArrowUpLeft, ChevronDown, ChevronUp, Star, Youtube } from 'lucide-react';
+import { ArrowUpLeft, ArrowUpRight, ChevronDown, ChevronUp, Star, Youtube } from 'lucide-react';
 import { CATEGORIES } from '../data/catalog';
 import { SoftwareCategory, UnifiedProgramItem } from '../types/software';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface CategoryDirectorySectionProps {
   unifiedPrograms: UnifiedProgramItem[];
@@ -17,6 +18,14 @@ export const CategoryDirectorySection: React.FC<CategoryDirectorySectionProps> =
   onSelectCategoryFilter,
 }) => {
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
+  const {
+    t,
+    isAr,
+    translateCategory,
+    translateCategoryDesc,
+    translateLicenseCategory,
+  } = useLanguage();
+  const NavArrow = isAr ? ArrowUpLeft : ArrowUpRight;
 
   const toggleCategoryExpand = (catId: string) => {
     setExpandedCategories((prev) => ({ ...prev, [catId]: !prev[catId] }));
@@ -30,13 +39,16 @@ export const CategoryDirectorySection: React.FC<CategoryDirectorySectionProps> =
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-14">
         <div className="max-w-2xl mb-10">
           <p className="text-xs font-medium text-blue-700 dark:text-blue-400 mb-2">
-            تصنيف شامل للبرامج المتوفرة
+            {t('تصنيف شامل للبرامج المتوفرة', 'Comprehensive Software Index')}
           </p>
           <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white text-balance mb-3">
-            دليل البرامج المصنّف حسب الفئات
+            {t('دليل البرامج المصنّف حسب الفئات', 'Software Directory by Category')}
           </h2>
           <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
-            استعرض قائمة البرامج التجارية والمجانية ومفتوحة المصدر موزعة على فئات الهندسة والـ BIM، الذكاء الاصطناعي، التصميم، الإنتاجية، التطوير، الألعاب، والمونتاج والصوتيات مع رابط مباشر لصفحة كل برنامج.
+            {t(
+              'استعرض قائمة البرامج التجارية والمجانية ومفتوحة المصدر موزعة على فئات الهندسة والـ BIM، الذكاء الاصطناعي، التصميم، الإنتاجية، التطوير، الألعاب، والمونتاج والصوتيات مع رابط مباشر لصفحة كل برنامج.',
+              'Browse commercial, free, and open-source software organized across Engineering & BIM, Artificial Intelligence, Design, Productivity, Development, Game Dev, and Video & Audio with direct links to each program page.'
+            )}
           </p>
         </div>
 
@@ -48,6 +60,7 @@ export const CategoryDirectorySection: React.FC<CategoryDirectorySectionProps> =
             const visiblePrograms = isExpanded
               ? categoryPrograms
               : categoryPrograms.slice(0, INITIAL_VISIBLE_PER_CATEGORY);
+            const localizedCatLabel = translateCategory(category.id);
 
             return (
               <div
@@ -58,14 +71,14 @@ export const CategoryDirectorySection: React.FC<CategoryDirectorySectionProps> =
                   <div className="flex items-start justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
                     <div>
                       <h3 className="font-display text-xl font-bold text-slate-900 dark:text-white mb-1">
-                        {category.label}
+                        {localizedCatLabel}
                       </h3>
                       <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                        {category.description}
+                        {translateCategoryDesc(category.id)}
                       </p>
                     </div>
                     <span className="text-xs font-mono font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap shrink-0 tabular-nums">
-                      {categoryPrograms.length} برنامج
+                      {categoryPrograms.length} {t('برنامج', 'apps')}
                     </span>
                   </div>
 
@@ -96,7 +109,7 @@ export const CategoryDirectorySection: React.FC<CategoryDirectorySectionProps> =
                                   : 'text-slate-500 dark:text-slate-400'
                               }`}
                             >
-                              {prog.licenseCategory}
+                              {translateLicenseCategory(prog.licenseCategory)}
                             </span>
                             <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
                               ·
@@ -112,7 +125,7 @@ export const CategoryDirectorySection: React.FC<CategoryDirectorySectionProps> =
                                 </span>
                                 <span className="inline-flex items-center gap-1 text-xs font-medium text-red-700 dark:text-red-400">
                                   <Youtube className="w-3.5 h-3.5" />
-                                  <span>شرح بيم أرابيا</span>
+                                  <span>{t('شرح بيم أرابيا', 'BIM Arabia')}</span>
                                 </span>
                               </>
                             )}
@@ -130,8 +143,8 @@ export const CategoryDirectorySection: React.FC<CategoryDirectorySectionProps> =
                           }}
                           className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 dark:text-blue-400 hover:underline whitespace-nowrap shrink-0 mt-0.5"
                         >
-                          <span>صفحة البرنامج</span>
-                          <ArrowUpLeft className="w-3.5 h-3.5" />
+                          <span>{t('صفحة البرنامج', 'Program Page')}</span>
+                          <NavArrow className="w-3.5 h-3.5" />
                         </a>
                       </li>
                     ))}
@@ -147,7 +160,10 @@ export const CategoryDirectorySection: React.FC<CategoryDirectorySectionProps> =
                     }}
                     className="text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-blue-700 dark:hover:text-blue-400 transition-colors cursor-pointer"
                   >
-                    تصفية البحث المتقدم على فئة {category.label}
+                    {t(
+                      `تصفية البحث المتقدم على فئة ${localizedCatLabel}`,
+                      `Filter directory by ${localizedCatLabel}`
+                    )}
                   </button>
 
                   {hasMore && (
@@ -158,8 +174,10 @@ export const CategoryDirectorySection: React.FC<CategoryDirectorySectionProps> =
                     >
                       <span>
                         {isExpanded
-                          ? 'عرض عدد أقل'
-                          : `عرض الكل (+${categoryPrograms.length - INITIAL_VISIBLE_PER_CATEGORY})`}
+                          ? t('عرض عدد أقل', 'Show Less')
+                          : `${t('عرض الكل', 'Show All')} (+${
+                              categoryPrograms.length - INITIAL_VISIBLE_PER_CATEGORY
+                            })`}
                       </span>
                       {isExpanded ? (
                         <ChevronUp className="w-3.5 h-3.5" />

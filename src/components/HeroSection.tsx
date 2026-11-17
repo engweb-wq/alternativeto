@@ -9,6 +9,7 @@ import {
   CornerDownLeft,
 } from 'lucide-react';
 import { UnifiedProgramItem } from '../types/software';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface HeroSectionProps {
   searchQuery: string;
@@ -103,6 +104,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   onSelectProgram,
   onQuickSearch,
 }) => {
+  const { isAr, t, translateLicenseCategory } = useLanguage();
   const [imgError, setImgError] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
@@ -148,12 +150,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     };
   }, [programs, trimmedQuery]);
 
-  // Reset highlight when query changes
   useEffect(() => {
     setHighlightedIndex(-1);
   }, [trimmedQuery]);
 
-  // Close dropdown on click outside
   useEffect(() => {
     const handlePointerDown = (event: MouseEvent) => {
       if (
@@ -215,25 +215,34 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           {/* Text & Search Column */}
           <div className="lg:col-span-7 flex flex-col justify-center">
             <p className="text-xs font-medium text-blue-700 dark:text-blue-400 mb-3">
-              دليل البرامج الهندسية والتصميمية · بدائل مجانية ومفتوحة المصدر
+              {t(
+                'دليل البرامج الهندسية والتصميمية والذكاء الاصطناعي · بدائل مجانية ومفتوحة المصدر',
+                'Engineering, AI & Creative Software Directory · Free & Open-Source Alternatives'
+              )}
             </p>
 
             <h1 className="font-display text-3xl sm:text-4xl lg:text-[2.75rem] font-extrabold text-slate-900 dark:text-white leading-[1.2] text-balance mb-4">
-              ابحث عن أي برنامج مدفوع واكتشف أفضل بديل مجاني له
+              {t(
+                'ابحث عن أي برنامج مدفوع واكتشف أفضل بديل مجاني له',
+                'Find the best free & open-source alternative to any paid software'
+              )}
             </h1>
 
             <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl mb-7">
-              موسوعة عربية على غرار AlternativeTo تقارن البرامج التجارية بأقوى البدائل المجانية ومفتوحة المصدر، مع ربط مباشر بالشروحات العملية على قناة بيم أرابيا للمهندس عمر سليم.
+              {t(
+                'موسوعة عربية على غرار AlternativeTo تقارن البرامج التجارية بأقوى البدائل المجانية ومفتوحة المصدر، مع ربط مباشر بالشروحات العملية على قناة بيم أرابيا للمهندس عمر سليم.',
+                'A curated directory inspired by AlternativeTo comparing commercial tools with top free & open-source alternatives, paired with BIM Arabia tutorials by Eng. Omar Selim.'
+              )}
             </p>
 
             {/* Instant Search Bar with Autocomplete Dropdown */}
             <div ref={searchContainerRef} className="relative max-w-2xl mb-4 z-20">
               <label htmlFor="directory-search" className="sr-only">
-                ابحث عن برنامج أو بديل مجاني
+                {t('ابحث عن برنامج أو بديل مجاني', 'Search for software or free alternative')}
               </label>
               <div className="relative flex items-center">
                 <Search
-                  className="w-5 h-5 text-slate-400 absolute right-4 pointer-events-none"
+                  className="w-5 h-5 text-slate-400 absolute start-4 pointer-events-none"
                   aria-hidden="true"
                 />
                 <input
@@ -261,8 +270,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                     setIsDropdownOpen(true);
                   }}
                   onKeyDown={handleKeyDown}
-                  placeholder="ابحث باسم البرنامج أو البديل (مثل: Revit، أوتوكاد، ChatGPT، Blender)..."
-                  className="w-full h-13 pr-12 pl-12 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors"
+                  placeholder={t(
+                    'ابحث باسم البرنامج أو البديل (مثل: Revit، أوتوكاد، ChatGPT، Blender)...',
+                    'Search by software or alternative (e.g., Revit, AutoCAD, ChatGPT, Blender)...'
+                  )}
+                  className="w-full h-13 ps-12 pe-12 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors"
                 />
                 {searchQuery && (
                   <button
@@ -273,8 +285,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                       setHighlightedIndex(-1);
                       inputRef.current?.focus();
                     }}
-                    aria-label="مسح البحث"
-                    className="absolute left-3 p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg cursor-pointer"
+                    aria-label={t('مسح البحث', 'Clear search')}
+                    className="absolute end-3 p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg cursor-pointer"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -286,23 +298,36 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 <div
                   id="search-autocomplete-listbox"
                   role="listbox"
-                  aria-label="اقتراحات البحث السريع"
+                  aria-label={t('اقتراحات البحث السريع', 'Quick Search Suggestions')}
                   className="absolute inset-x-0 top-full mt-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl overflow-hidden"
                 >
                   {suggestions.length === 0 ? (
                     <div className="px-4 py-5 text-center space-y-1.5">
                       <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                        لا توجد نتائج مباشرة لـ "{trimmedQuery}"
+                        {t(
+                          `لا توجد نتائج مباشرة لـ "${trimmedQuery}"`,
+                          `No direct matches for "${trimmedQuery}"`
+                        )}
                       </p>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
-                        جرّب البحث بالاسم الإنجليزي أو العربي أو اسم الصيغة مثل DWG أو IFC
+                        {t(
+                          'جرّب البحث بالاسم الإنجليزي أو العربي أو اسم الصيغة مثل DWG أو IFC',
+                          'Try searching by software name or file format such as DWG or IFC'
+                        )}
                       </p>
                     </div>
                   ) : (
                     <>
                       <div className="px-3.5 py-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/60 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
-                        <span>اقتراحات سريعة ({totalMatches} نتيجة مطابقة)</span>
-                        <span className="hidden sm:inline">اضغط للانتقال الفوري</span>
+                        <span>
+                          {t(
+                            `اقتراحات سريعة (${totalMatches} نتيجة مطابقة)`,
+                            `Quick suggestions (${totalMatches} matches)`
+                          )}
+                        </span>
+                        <span className="hidden sm:inline">
+                          {t('اضغط للانتقال الفوري', 'Click to jump directly')}
+                        </span>
                       </div>
 
                       <div className="max-h-[380px] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/80">
@@ -327,7 +352,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                                 <button
                                   type="button"
                                   onClick={() => handleSelectSuggestion(item.id)}
-                                  className="flex items-start gap-3 text-right flex-1 min-w-0 cursor-pointer focus:outline-none"
+                                  className="flex items-start gap-3 text-start flex-1 min-w-0 cursor-pointer focus:outline-none"
                                 >
                                   <div
                                     className="w-9 h-9 rounded-lg flex items-center justify-center text-white font-display font-bold text-xs shrink-0 mt-0.5"
@@ -341,9 +366,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                                       <span className="font-display font-bold text-sm text-slate-900 dark:text-white truncate">
                                         <HighlightMatch text={item.name} query={trimmedQuery} />
                                       </span>
-                                      <span className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                                        (<HighlightMatch text={item.arabicName} query={trimmedQuery} />)
-                                      </span>
+                                      {isAr && (
+                                        <span className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                                          (<HighlightMatch text={item.arabicName} query={trimmedQuery} />)
+                                        </span>
+                                      )}
                                     </div>
 
                                     <div className="mt-1 flex items-center flex-wrap gap-1.5 text-[11px]">
@@ -354,26 +381,26 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                                             : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60'
                                         }`}
                                       >
-                                        {item.licenseLabel}
+                                        {isAr ? item.licenseLabel : translateLicenseCategory(item.licenseCategory)}
                                       </span>
 
                                       {item.alternativeEntry?.isBestFree && (
                                         <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 font-semibold">
                                           <Sparkles className="w-3 h-3" />
-                                          أفضل بديل
+                                          <span>{t('أفضل بديل', 'Best Alternative')}</span>
                                         </span>
                                       )}
 
                                       {item.bimArabiaTutorial?.hasTutorial && (
                                         <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 font-medium">
                                           <Youtube className="w-3 h-3" />
-                                          بيم أرابيا
+                                          <span>{t('بيم أرابيا', 'BIM Arabia')}</span>
                                         </span>
                                       )}
 
                                       {!isCommercial && item.parentCommercial && (
                                         <span className="text-slate-500 dark:text-slate-400 truncate">
-                                          بديل لـ {item.parentCommercial.name}
+                                          {t('بديل لـ', 'Alternative to')} {item.parentCommercial.name}
                                         </span>
                                       )}
                                     </div>
@@ -383,19 +410,19 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                                 <button
                                   type="button"
                                   onClick={() => handleSelectSuggestion(item.id)}
-                                  aria-label={`فتح صفحة ${item.name}`}
+                                  aria-label={t(`فتح صفحة ${item.name}`, `Open ${item.name}`)}
                                   className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-blue-700 dark:text-blue-400 hover:bg-blue-100/70 dark:hover:bg-blue-900/40 shrink-0 mt-1 cursor-pointer"
                                 >
-                                  <span className="hidden sm:inline">فتح</span>
+                                  <span className="hidden sm:inline">{t('فتح', 'Open')}</span>
                                   <ArrowUpLeft className="w-3.5 h-3.5" />
                                 </button>
                               </div>
 
                               {/* 1-Click Direct Jump to Top Free Alternatives for Commercial Software */}
                               {isCommercial && topAlternatives.length > 0 && (
-                                <div className="mt-2 mr-12 flex items-center flex-wrap gap-1.5 text-[11px]">
+                                <div className="mt-2 ms-12 flex items-center flex-wrap gap-1.5 text-[11px]">
                                   <span className="text-slate-500 dark:text-slate-400">
-                                    البدائل الأسرع:
+                                    {t('البدائل الأسرع:', 'Top alternatives:')}
                                   </span>
                                   {topAlternatives.map((alt) => (
                                     <button
@@ -422,10 +449,18 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                           className="inline-flex items-center gap-1.5 font-semibold text-blue-700 dark:text-blue-400 hover:underline cursor-pointer"
                         >
                           <CornerDownLeft className="w-3.5 h-3.5" />
-                          <span>عرض كل النتائج ({totalMatches}) في الدليل الكامل</span>
+                          <span>
+                            {t(
+                              `عرض كل النتائج (${totalMatches}) في الدليل الكامل`,
+                              `View all ${totalMatches} matches in directory`
+                            )}
+                          </span>
                         </button>
                         <span className="hidden sm:inline text-[11px] text-slate-400 dark:text-slate-500">
-                          ↑↓ للتنقل · Enter للفتح · Esc للإغلاق
+                          {t(
+                            '↑↓ للتنقل · Enter للفتح · Esc للإغلاق',
+                            '↑↓ Navigate · Enter Open · Esc Close'
+                          )}
                         </span>
                       </div>
                     </>
@@ -436,7 +471,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
             {/* Quick Search Suggestions */}
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-              <span>أشهر عمليات البحث:</span>
+              <span>{t('أشهر عمليات البحث:', 'Popular searches:')}</span>
               {QUICK_TERMS.map((term) => (
                 <button
                   key={term}
@@ -456,7 +491,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               {!imgError ? (
                 <img
                   src="/src/assets/images/hero_bim_workspace_1794894118705.jpg"
-                  alt="بيئة عمل معمارية وهندسية لنمذجة معلومات المباني"
+                  alt={t(
+                    'بيئة عمل معمارية وهندسية لنمذجة معلومات المباني',
+                    'Architectural and BIM engineering workspace'
+                  )}
                   referrerPolicy="no-referrer"
                   onError={() => setImgError(true)}
                   className="w-full h-full lg:h-full object-cover"
@@ -464,12 +502,17 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center p-8 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-800 text-slate-600 dark:text-slate-300">
                   <Layers className="w-12 h-12 mb-3 text-blue-700 dark:text-blue-400" />
-                  <p className="font-display font-bold text-lg">بيئة عمل الهندسة والـ BIM المفتوحة</p>
+                  <p className="font-display font-bold text-lg">
+                    {t('بيئة عمل الهندسة والـ BIM المفتوحة', 'Open Engineering & BIM Workspace')}
+                  </p>
                 </div>
               )}
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/85 via-slate-950/45 to-transparent p-5">
                 <p className="text-xs text-slate-200 font-medium">
-                  تكامل مع معايير OpenBIM و IFC · روابط تعليمية مباشرة لقناة بيم أرابيا
+                  {t(
+                    'تكامل مع معايير OpenBIM و IFC · روابط تعليمية مباشرة لقناة بيم أرابيا',
+                    'OpenBIM & IFC standards · Direct tutorial links to BIM Arabia'
+                  )}
                 </p>
               </div>
             </div>
@@ -479,25 +522,33 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         {/* Full-Width 4-Column KPI Strip below Hero Split */}
         <div className="mt-10 pt-8 border-t border-slate-200 dark:border-slate-800 grid grid-cols-2 lg:grid-cols-4 gap-6">
           <div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">البرامج المفهرسة</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+              {t('البرامج المفهرسة', 'Indexed Commercial Tools')}
+            </p>
             <p className="font-display text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tabular-nums">
               {totalCommercial}
             </p>
           </div>
           <div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">البدائل المجانية والحرة</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+              {t('البدائل المجانية والحرة', 'Free & Open Alternatives')}
+            </p>
             <p className="font-display text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tabular-nums">
               {totalFreeAlternatives}
             </p>
           </div>
           <div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">برامج بشروحات بيم أرابيا</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+              {t('برامج بشروحات بيم أرابيا', 'BIM Arabia Tutorials')}
+            </p>
             <p className="font-display text-2xl sm:text-3xl font-bold text-blue-700 dark:text-blue-400 tabular-nums">
               {totalBimTutorials}
             </p>
           </div>
           <div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">أدواتك المحفوظة</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+              {t('أدواتك المحفوظة', 'Saved Toolkit')}
+            </p>
             <p className="font-display text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tabular-nums">
               {savedCount}
             </p>
@@ -507,4 +558,5 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     </section>
   );
 };
+
 

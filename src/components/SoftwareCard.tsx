@@ -1,8 +1,18 @@
 import React from 'react';
-import { ThumbsUp, Youtube, Bookmark, ArrowUpLeft, Check, Star, ArrowLeftRight, Github } from 'lucide-react';
-import { CATEGORIES } from '../data/catalog';
+import {
+  ThumbsUp,
+  Youtube,
+  Bookmark,
+  ArrowUpLeft,
+  ArrowUpRight,
+  Check,
+  Star,
+  ArrowLeftRight,
+  Github,
+} from 'lucide-react';
 import { SoftwareEntry } from '../types/software';
 import { useLongPress } from '../hooks/useLongPress';
+import { useLanguage } from '../i18n/LanguageContext';
 import { StarRating } from './StarRating';
 
 interface SoftwareCardProps {
@@ -30,7 +40,15 @@ export const SoftwareCard: React.FC<SoftwareCardProps> = ({
   onSelectSoftware,
   onQuickCompare,
 }) => {
-  const categoryLabel = CATEGORIES.find((c) => c.id === entry.category)?.label ?? entry.category;
+  const {
+    t,
+    isAr,
+    translateCategory,
+    translateLicenseCategory,
+    translateLicenseType,
+  } = useLanguage();
+
+  const categoryLabel = translateCategory(entry.category);
   const sortedAlternatives = [...entry.alternatives].sort((a, b) => {
     if (a.isBestFree !== b.isBestFree) return a.isBestFree ? -1 : 1;
     return b.likes - a.likes;
@@ -41,6 +59,7 @@ export const SoftwareCard: React.FC<SoftwareCardProps> = ({
   const cardTutorial = entry.bimArabiaTutorial ?? bestAlt?.bimArabiaTutorial;
   const isLiked = bestAlt ? likedAltIds.has(bestAlt.id) : false;
   const isSaved = bestAlt ? savedAltIds.has(bestAlt.id) : false;
+  const NavArrow = isAr ? ArrowUpLeft : ArrowUpRight;
 
   const { isPressing, longPressProps } = useLongPress({
     onLongPress: () => onQuickCompare(entry.id),
@@ -49,7 +68,10 @@ export const SoftwareCard: React.FC<SoftwareCardProps> = ({
   return (
     <article
       {...longPressProps}
-      title="اضغط مطولاً للمقارنة السريعة مع أفضل بديل مجاني"
+      title={t(
+        'اضغط مطولاً للمقارنة السريعة مع أفضل بديل مجاني',
+        'Long-press to quick-compare with the best free alternative'
+      )}
       className={`bg-white dark:bg-slate-900 border rounded-xl p-6 flex flex-col justify-between transition-all ${
         isPressing
           ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-600/40 scale-[0.99]'
@@ -81,14 +103,14 @@ export const SoftwareCard: React.FC<SoftwareCardProps> = ({
                 </a>
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                {entry.arabicName} · {entry.vendor}
+                {isAr ? `${entry.arabicName} · ${entry.vendor}` : entry.vendor}
               </p>
             </div>
           </div>
 
           <div className="flex flex-col items-end gap-1 shrink-0">
             <span className="text-xs font-medium text-amber-700 dark:text-amber-400 whitespace-nowrap">
-              {entry.licenseCategory}
+              {translateLicenseCategory(entry.licenseCategory)}
             </span>
             {entry.rating !== undefined && (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-700 dark:text-slate-200 tabular-nums">
@@ -118,11 +140,18 @@ export const SoftwareCard: React.FC<SoftwareCardProps> = ({
           <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
             <div className="flex items-center justify-between gap-2 mb-1.5">
               <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-                أفضل بديل مجاني مقترح
-                {bestAlt.isArabicOrigin ? ` · ${bestAlt.originLabel ?? 'بديل عربي'}` : ''}
+                {t('أفضل بديل مجاني مقترح', 'Best Suggested Free Alternative')}
+                {bestAlt.isArabicOrigin
+                  ? ` · ${
+                      isAr
+                        ? bestAlt.originLabel ?? 'بديل عربي'
+                        : 'Arabic Origin'
+                    }`
+                  : ''}
               </span>
               <span className="text-xs text-slate-500 dark:text-slate-400">
-                {bestAlt.license} · <span className="font-mono">{bestAlt.licenseCode}</span>
+                {translateLicenseType(bestAlt.license)} ·{' '}
+                <span className="font-mono">{bestAlt.licenseCode}</span>
               </span>
             </div>
 
@@ -150,7 +179,9 @@ export const SoftwareCard: React.FC<SoftwareCardProps> = ({
                       : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
-                  {compareIds.has(bestAlt.id) ? '✓ في المقارنة' : '+ قارن البديل'}
+                  {compareIds.has(bestAlt.id)
+                    ? t('✓ في المقارنة', '✓ Comparing')
+                    : t('+ قارن البديل', '+ Compare Alt')}
                 </button>
                 {otherAltCount > 0 && (
                   <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap tabular-nums">
@@ -171,12 +202,14 @@ export const SoftwareCard: React.FC<SoftwareCardProps> = ({
                 count={bestAlt.ratingCount ?? 40}
                 userRating={bestAlt.userRating}
                 onRate={(stars) => onRateProgram(bestAlt.id, stars)}
-                label="تقييم البديل:"
+                label={t('تقييم البديل:', 'Alternative rating:')}
               />
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400 mb-4">
-              <span>يعمل على: {bestAlt.platforms.join(' · ')}</span>
+              <span>
+                {t('يعمل على:', 'Runs on:')} {bestAlt.platforms.join(' · ')}
+              </span>
               {bestAlt.githubUrl && (
                 <a
                   href={bestAlt.githubUrl}
@@ -204,9 +237,11 @@ export const SoftwareCard: React.FC<SoftwareCardProps> = ({
           >
             <span className="flex items-center gap-2 min-w-0">
               <Youtube className="w-4 h-4 shrink-0" />
-              <span className="truncate">{cardTutorial.title}</span>
+              <span className="truncate">
+                {isAr ? cardTutorial.title : `BIM Arabia Tutorial: ${entry.name}`}
+              </span>
             </span>
-            <ArrowUpLeft className="w-3.5 h-3.5 shrink-0" />
+            <NavArrow className="w-3.5 h-3.5 shrink-0" />
           </a>
         )}
 
@@ -232,7 +267,11 @@ export const SoftwareCard: React.FC<SoftwareCardProps> = ({
                   type="button"
                   onClick={() => onToggleSave(bestAlt.id)}
                   aria-pressed={isSaved}
-                  aria-label={isSaved ? 'إزالة من حقيبة أدواتي' : 'حفظ في حقيبة أدواتي'}
+                  aria-label={
+                    isSaved
+                      ? t('إزالة من حقيبة أدواتي', 'Remove from My Toolkit')
+                      : t('حفظ في حقيبة أدواتي', 'Save to My Toolkit')
+                  }
                   className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                     isSaved
                       ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300'
@@ -240,7 +279,7 @@ export const SoftwareCard: React.FC<SoftwareCardProps> = ({
                   }`}
                 >
                   {isSaved ? <Check className="w-3.5 h-3.5" /> : <Bookmark className="w-3.5 h-3.5" />}
-                  <span>{isSaved ? 'محفوظ' : 'حفظ'}</span>
+                  <span>{isSaved ? t('محفوظ', 'Saved') : t('حفظ', 'Save')}</span>
                 </button>
               </>
             )}
@@ -255,7 +294,7 @@ export const SoftwareCard: React.FC<SoftwareCardProps> = ({
               }`}
             >
               <ArrowLeftRight className="w-3.5 h-3.5" />
-              <span>{compareIds.has(entry.id) ? 'مضاف' : 'قارن'}</span>
+              <span>{compareIds.has(entry.id) ? t('مضاف', 'Added') : t('قارن', 'Compare')}</span>
             </button>
           </div>
 
@@ -267,13 +306,16 @@ export const SoftwareCard: React.FC<SoftwareCardProps> = ({
             }}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900 text-xs font-semibold transition-colors whitespace-nowrap shrink-0"
           >
-            <span>صفحة البرنامج والبدائل</span>
-            <ArrowUpLeft className="w-3.5 h-3.5" />
+            <span>{t('صفحة البرنامج والبدائل', 'View Alternatives')}</span>
+            <NavArrow className="w-3.5 h-3.5" />
           </a>
         </div>
 
         <p className="text-[11px] text-slate-400 dark:text-slate-500">
-          اضغط مطولاً على البطاقة للمقارنة السريعة مع أفضل بديل مجاني
+          {t(
+            'اضغط مطولاً على البطاقة للمقارنة السريعة مع أفضل بديل مجاني',
+            'Long-press this card to quick-compare with the best free alternative'
+          )}
         </p>
       </div>
     </article>

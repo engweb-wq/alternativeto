@@ -1,8 +1,8 @@
 import React from 'react';
-import { ArrowUpLeft, Youtube, ExternalLink, ArrowLeftRight, Github } from 'lucide-react';
-import { CATEGORIES } from '../data/catalog';
+import { ArrowUpLeft, ArrowUpRight, Youtube, ExternalLink, ArrowLeftRight, Github } from 'lucide-react';
 import { UnifiedProgramItem } from '../types/software';
 import { useLongPress } from '../hooks/useLongPress';
+import { useLanguage } from '../i18n/LanguageContext';
 import { StarRating } from './StarRating';
 
 interface UnifiedProgramCardProps {
@@ -22,7 +22,16 @@ export const UnifiedProgramCard: React.FC<UnifiedProgramCardProps> = ({
   onRateProgram,
   onQuickCompare,
 }) => {
-  const categoryLabel = CATEGORIES.find((c) => c.id === item.category)?.label ?? item.category;
+  const {
+    t,
+    isAr,
+    translateCategory,
+    translateFeature,
+    translateLicenseCategory,
+  } = useLanguage();
+
+  const categoryLabel = translateCategory(item.category);
+  const NavArrow = isAr ? ArrowUpLeft : ArrowUpRight;
 
   const { isPressing, longPressProps } = useLongPress({
     onLongPress: () => onQuickCompare(item.id),
@@ -31,7 +40,10 @@ export const UnifiedProgramCard: React.FC<UnifiedProgramCardProps> = ({
   return (
     <article
       {...longPressProps}
-      title="اضغط مطولاً للمقارنة السريعة مع أفضل بديل مجاني"
+      title={t(
+        'اضغط مطولاً للمقارنة السريعة مع أفضل بديل مجاني',
+        'Long-press to quick-compare with the best free alternative'
+      )}
       className={`bg-white dark:bg-slate-900 border rounded-xl p-6 flex flex-col justify-between transition-all ${
         isPressing
           ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-600/40 scale-[0.99]'
@@ -62,7 +74,7 @@ export const UnifiedProgramCard: React.FC<UnifiedProgramCardProps> = ({
                 </a>
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                {item.arabicName} · {item.vendorOrBadge}
+                {isAr ? `${item.arabicName} · ${item.vendorOrBadge}` : item.vendorOrBadge}
               </p>
             </div>
           </div>
@@ -76,7 +88,7 @@ export const UnifiedProgramCard: React.FC<UnifiedProgramCardProps> = ({
                 : 'text-amber-700 dark:text-amber-400'
             }`}
           >
-            {item.licenseCategory}
+            {translateLicenseCategory(item.licenseCategory)}
           </span>
         </div>
 
@@ -90,7 +102,7 @@ export const UnifiedProgramCard: React.FC<UnifiedProgramCardProps> = ({
             <>
               <span aria-hidden="true">·</span>
               <span className="font-semibold text-emerald-700 dark:text-emerald-400">
-                {item.originLabel ?? 'بديل عربي'}
+                {isAr ? item.originLabel ?? 'بديل عربي' : 'Arabic Origin'}
               </span>
             </>
           )}
@@ -106,12 +118,12 @@ export const UnifiedProgramCard: React.FC<UnifiedProgramCardProps> = ({
             count={item.ratingCount}
             userRating={item.userRating}
             onRate={(stars) => onRateProgram(item.id, stars)}
-            label="التقييم:"
+            label={t('التقييم:', 'Rating:')}
           />
         </div>
 
         <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-          الميزات: {item.features.join(' · ')}
+          {t('الميزات:', 'Features:')} {item.features.map(translateFeature).join(' · ')}
         </p>
       </div>
 
@@ -125,7 +137,9 @@ export const UnifiedProgramCard: React.FC<UnifiedProgramCardProps> = ({
           >
             <span className="flex items-center gap-2 min-w-0">
               <Youtube className="w-4 h-4 shrink-0" />
-              <span className="truncate">شاهد فيديو الشرح في قناة بيم أرابيا</span>
+              <span className="truncate">
+                {t('شاهد فيديو الشرح في قناة بيم أرابيا', 'Watch BIM Arabia Tutorial')}
+              </span>
             </span>
             <ExternalLink className="w-3.5 h-3.5 shrink-0" />
           </a>
@@ -144,7 +158,7 @@ export const UnifiedProgramCard: React.FC<UnifiedProgramCardProps> = ({
               }`}
             >
               <ArrowLeftRight className="w-3.5 h-3.5" />
-              <span>{isCompared ? 'في المقارنة' : 'قارن'}</span>
+              <span>{isCompared ? t('في المقارنة', 'Comparing') : t('قارن', 'Compare')}</span>
             </button>
 
             <a
@@ -153,7 +167,7 @@ export const UnifiedProgramCard: React.FC<UnifiedProgramCardProps> = ({
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
             >
-              <span>الموقع</span>
+              <span>{t('الموقع', 'Website')}</span>
               <ExternalLink className="w-3 h-3" />
             </a>
 
@@ -162,7 +176,7 @@ export const UnifiedProgramCard: React.FC<UnifiedProgramCardProps> = ({
                 href={item.githubUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label={`مستودع GitHub لـ ${item.name}`}
+                aria-label={t(`مستودع GitHub لـ ${item.name}`, `${item.name} GitHub repository`)}
                 className="inline-flex items-center gap-1 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
               >
                 <Github className="w-3.5 h-3.5" />
@@ -179,13 +193,16 @@ export const UnifiedProgramCard: React.FC<UnifiedProgramCardProps> = ({
             }}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900 text-xs font-semibold transition-colors whitespace-nowrap shrink-0"
           >
-            <span>صفحة البرنامج</span>
-            <ArrowUpLeft className="w-3.5 h-3.5" />
+            <span>{t('صفحة البرنامج', 'Program Page')}</span>
+            <NavArrow className="w-3.5 h-3.5" />
           </a>
         </div>
 
         <p className="text-[11px] text-slate-400 dark:text-slate-500">
-          اضغط مطولاً على البطاقة للمقارنة السريعة
+          {t(
+            'اضغط مطولاً على البطاقة للمقارنة السريعة',
+            'Long-press this card for Quick Compare'
+          )}
         </p>
       </div>
     </article>

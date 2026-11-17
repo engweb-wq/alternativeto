@@ -9,6 +9,7 @@ import { MORE_SOFTWARE_CATALOG } from './catalogMore';
 import { ARABIC_AND_MORE_CATALOG } from './catalogArabicAndMore';
 import { GITHUB_TOP_CATALOG } from './catalogGithubTop';
 import { AI_SOFTWARE_CATALOG } from './catalogAI';
+import { MORE_EXPANSION_CATALOG } from './catalogMoreExpansion';
 import { resolveProgramDownloadUrl } from './downloadLinks';
 import { resolveProgramGithubUrl } from './githubRepos';
 import { resolveBimArabiaTutorial } from './bimArabiaLinks';
@@ -1503,6 +1504,7 @@ export const INITIAL_SOFTWARE_CATALOG: SoftwareEntry[] = [
   ...ARABIC_AND_MORE_CATALOG,
   ...GITHUB_TOP_CATALOG,
   ...AI_SOFTWARE_CATALOG,
+  ...MORE_EXPANSION_CATALOG,
 ];
 
 export function getBaseRating(

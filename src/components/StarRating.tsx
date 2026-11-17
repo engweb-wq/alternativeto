@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Star } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface StarRatingProps {
   average: number;
@@ -19,6 +20,7 @@ export const StarRating: React.FC<StarRatingProps> = ({
   label,
 }) => {
   const [hoverStars, setHoverStars] = useState<number | null>(null);
+  const { t } = useLanguage();
   const displayStars = hoverStars ?? userRating ?? Math.round(average);
   const iconSize = size === 'sm' ? 'w-3.5 h-3.5' : 'w-4 h-4';
 
@@ -33,7 +35,7 @@ export const StarRating: React.FC<StarRatingProps> = ({
         dir="ltr"
         onMouseLeave={() => setHoverStars(null)}
         role={onRate ? 'group' : undefined}
-        aria-label={onRate ? 'تقييم من 1 إلى 5 نجوم' : undefined}
+        aria-label={onRate ? t('تقييم من 1 إلى 5 نجوم', 'Rate 1 to 5 stars') : undefined}
       >
         {[1, 2, 3, 4, 5].map((starValue) => {
           const isFilled = starValue <= displayStars;
@@ -59,7 +61,7 @@ export const StarRating: React.FC<StarRatingProps> = ({
               type="button"
               onClick={() => onRate(starValue)}
               onMouseEnter={() => setHoverStars(starValue)}
-              aria-label={`تقييم ${starValue} من 5 نجوم`}
+              aria-label={t(`تقييم ${starValue} من 5 نجوم`, `Rate ${starValue} out of 5 stars`)}
               aria-pressed={userRating === starValue}
               className="p-0.5 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 cursor-pointer transition-transform hover:scale-110"
             >
@@ -83,11 +85,11 @@ export const StarRating: React.FC<StarRatingProps> = ({
         {average.toFixed(1)}
       </span>
       <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-        ({count} تقييم)
+        ({count} {t('تقييم', count === 1 ? 'rating' : 'ratings')})
       </span>
       {userRating && (
         <span className="text-xs font-medium text-blue-700 dark:text-blue-400 tabular-nums">
-          · تقييمك {userRating}/5
+          · {t('تقييمك', 'Yours')} {userRating}/5
         </span>
       )}
     </div>

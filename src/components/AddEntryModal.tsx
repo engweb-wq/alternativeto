@@ -8,6 +8,7 @@ import {
   SoftwareCategory,
   SoftwareEntry,
 } from '../types/software';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface AddEntryModalProps {
   isOpen: boolean;
@@ -32,6 +33,8 @@ export const AddEntryModal: React.FC<AddEntryModalProps> = ({ isOpen, onClose, o
   const [altWebsite, setAltWebsite] = useState('');
   const [altDownloadUrl, setAltDownloadUrl] = useState('');
   const [altPlatforms, setAltPlatforms] = useState<OperatingSystem[]>(['Windows', 'macOS', 'Linux']);
+
+  const { t, translateCategory, translateFeature, translateLicenseType } = useLanguage();
 
   if (!isOpen) return null;
 
@@ -60,16 +63,19 @@ export const AddEntryModal: React.FC<AddEntryModalProps> = ({ isOpen, onClose, o
       id: cleanId,
       name: name.trim(),
       arabicName: arabicName.trim() || name.trim(),
-      vendor: vendor.trim() || 'تجاري',
+      vendor: vendor.trim() || t('تجاري', 'Commercial'),
       category,
       licenseCategory: 'مدفوع',
-      pricingNote: 'برنامج تجاري / مدفوع',
+      pricingNote: t('برنامج تجاري / مدفوع', 'Commercial / Paid Software'),
       platforms: ['Windows'],
       features: featuresList,
-      shortSummary: shortSummary.trim() || `بدائل مجانية لبرنامج ${name.trim()}`,
+      shortSummary: shortSummary.trim() || t(`بدائل مجانية لبرنامج ${name.trim()}`, `Free alternatives to ${name.trim()}`),
       description:
         shortSummary.trim() ||
-        `قائمة بأفضل البدائل المجانية ومفتوحة المصدر لبرنامج ${name.trim()}.`,
+        t(
+          `قائمة بأفضل البدائل المجانية ومفتوحة المصدر لبرنامج ${name.trim()}.`,
+          `Directory of the best free and open-source alternatives to ${name.trim()}.`
+        ),
       fileFormats: ['Standard'],
       arabicSupport: 'جيد',
       websiteUrl: downloadUrl.trim() || 'https://alternativeto.net/',
@@ -82,7 +88,7 @@ export const AddEntryModal: React.FC<AddEntryModalProps> = ({ isOpen, onClose, o
             hasTutorial: true,
             title: `شرح ${name.trim()} في قناة بيم أرابيا`,
             url: bimTutorialUrl.trim(),
-            topics: ['شرح مضاف من المستخدم'],
+            topics: [t('شرح مضاف من المستخدم', 'User-submitted tutorial')],
             target: 'commercial',
           }
         : undefined,
@@ -140,12 +146,15 @@ export const AddEntryModal: React.FC<AddEntryModalProps> = ({ isOpen, onClose, o
             id="add-modal-title"
             className="font-display text-lg font-bold text-slate-900 dark:text-white"
           >
-            إضافة برنامج وبديل مجاني ورابط شرح بيم أرابيا
+            {t(
+              'إضافة برنامج وبديل مجاني ورابط شرح بيم أرابيا',
+              'Add Program, Free Alternative & BIM Arabia Link'
+            )}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label="إغلاق"
+            aria-label={t('إغلاق', 'Close')}
             className="p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
           >
             <X className="w-5 h-5" />
@@ -155,31 +164,31 @@ export const AddEntryModal: React.FC<AddEntryModalProps> = ({ isOpen, onClose, o
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-              بيانات البرنامج التجاري
+              {t('بيانات البرنامج التجاري', 'Commercial Software Details')}
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  اسم البرنامج (بالإنجليزية) *
+                  {t('اسم البرنامج (بالإنجليزية) *', 'Program Name *')}
                 </label>
                 <input
                   type="text"
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="مثال: Autodesk Robot"
+                  placeholder={t('مثال: Autodesk Robot', 'e.g. Autodesk Robot')}
                   className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-white"
                 />
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  الاسم بالعربية
+                  {t('الاسم بالعربية', 'Arabic Name (optional)')}
                 </label>
                 <input
                   type="text"
                   value={arabicName}
                   onChange={(e) => setArabicName(e.target.value)}
-                  placeholder="مثال: روبوت الإنشائي"
+                  placeholder={t('مثال: روبوت الإنشائي', 'e.g. روبوت الإنشائي')}
                   className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-white"
                 />
               </div>
@@ -188,7 +197,7 @@ export const AddEntryModal: React.FC<AddEntryModalProps> = ({ isOpen, onClose, o
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  الفئة
+                  {t('الفئة', 'Category')}
                 </label>
                 <select
                   value={category}
@@ -197,20 +206,20 @@ export const AddEntryModal: React.FC<AddEntryModalProps> = ({ isOpen, onClose, o
                 >
                   {CATEGORIES.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.label}
+                      {translateCategory(c.id)}
                     </option>
                   ))}
                 </select>
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  الشركة المطورة
+                  {t('الشركة المطورة', 'Vendor / Developer')}
                 </label>
                 <input
                   type="text"
                   value={vendor}
                   onChange={(e) => setVendor(e.target.value)}
-                  placeholder="مثال: Autodesk"
+                  placeholder={t('مثال: Autodesk', 'e.g. Autodesk')}
                   className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-white"
                 />
               </div>
@@ -218,13 +227,16 @@ export const AddEntryModal: React.FC<AddEntryModalProps> = ({ isOpen, onClose, o
 
             <div>
               <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                وصف مختصر لوظيفة البرنامج
+                {t('وصف مختصر لوظيفة البرنامج', 'Short Summary')}
               </label>
               <input
                 type="text"
                 value={shortSummary}
                 onChange={(e) => setShortSummary(e.target.value)}
-                placeholder="مثال: التحليل والتصميم الإنشائي للمباني الخرسانية والمعدنية"
+                placeholder={t(
+                  'مثال: التحليل والتصميم الإنشائي للمباني الخرسانية والمعدنية',
+                  'e.g. Structural analysis and design for concrete and steel buildings'
+                )}
                 className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-white"
               />
             </div>
@@ -232,10 +244,11 @@ export const AddEntryModal: React.FC<AddEntryModalProps> = ({ isOpen, onClose, o
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  رابط التحميل أو الموقع الرسمي (اختياري)
+                  {t('رابط التحميل أو الموقع الرسمي (اختياري)', 'Official Website or Download URL (optional)')}
                 </label>
                 <input
                   type="url"
+                  dir="ltr"
                   value={downloadUrl}
                   onChange={(e) => setDownloadUrl(e.target.value)}
                   placeholder="https://..."
@@ -244,10 +257,11 @@ export const AddEntryModal: React.FC<AddEntryModalProps> = ({ isOpen, onClose, o
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  رابط الشرح في قناة بيم أرابيا (اختياري)
+                  {t('رابط الشرح في قناة بيم أرابيا (اختياري)', 'BIM Arabia YouTube Link (optional)')}
                 </label>
                 <input
                   type="url"
+                  dir="ltr"
                   value={bimTutorialUrl}
                   onChange={(e) => setBimTutorialUrl(e.target.value)}
                   placeholder="https://www.youtube.com/@omar_selim1/..."
@@ -258,7 +272,7 @@ export const AddEntryModal: React.FC<AddEntryModalProps> = ({ isOpen, onClose, o
 
             <div className="space-y-1.5">
               <span className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                الميزات الرئيسية:
+                {t('الميزات الرئيسية:', 'Key Features:')}
               </span>
               <div className="flex flex-wrap gap-1.5">
                 {FEATURE_TAGS.map((feat) => (
@@ -272,7 +286,7 @@ export const AddEntryModal: React.FC<AddEntryModalProps> = ({ isOpen, onClose, o
                         : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
                     }`}
                   >
-                    {feat}
+                    {translateFeature(feat)}
                   </button>
                 ))}
               </div>
@@ -281,49 +295,54 @@ export const AddEntryModal: React.FC<AddEntryModalProps> = ({ isOpen, onClose, o
 
           <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-4">
             <h3 className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
-              أفضل بديل مجاني مقترح
+              {t('أفضل بديل مجاني مقترح', 'Suggested Best Free Alternative')}
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  اسم البديل المجاني *
+                  {t('اسم البديل المجاني *', 'Free Alternative Name *')}
                 </label>
                 <input
                   type="text"
                   required
                   value={altName}
                   onChange={(e) => setAltName(e.target.value)}
-                  placeholder="مثال: CalculiX"
+                  placeholder={t('مثال: CalculiX', 'e.g. CalculiX')}
                   className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-white"
                 />
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  نوع الترخيص
+                  {t('نوع الترخيص', 'License Type')}
                 </label>
                 <select
                   value={altLicense}
                   onChange={(e) => setAltLicense(e.target.value as LicenseType)}
                   className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-white"
                 >
-                  <option value="مفتوح المصدر">مفتوح المصدر</option>
-                  <option value="مجاني بالكامل">مجاني بالكامل</option>
-                  <option value="مجاني للاستخدام الشخصي">مجاني للاستخدام الشخصي</option>
+                  <option value="مفتوح المصدر">{translateLicenseType('مفتوح المصدر')}</option>
+                  <option value="مجاني بالكامل">{translateLicenseType('مجاني بالكامل')}</option>
+                  <option value="مجاني للاستخدام الشخصي">
+                    {translateLicenseType('مجاني للاستخدام الشخصي')}
+                  </option>
                 </select>
               </div>
             </div>
 
             <div>
               <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                وصف ميزة البديل المجاني *
+                {t('وصف ميزة البديل المجاني *', 'Alternative Key Advantage *')}
               </label>
               <input
                 type="text"
                 required
                 value={altTagline}
                 onChange={(e) => setAltTagline(e.target.value)}
-                placeholder="مثال: محرك عناصر محدودة مجاني مفتوح المصدر للتحليل الإنشائي والميكانيكي"
+                placeholder={t(
+                  'مثال: محرك عناصر محدودة مجاني مفتوح المصدر للتحليل الإنشائي والميكانيكي',
+                  'e.g. Free open-source finite element solver for structural & mechanical analysis'
+                )}
                 className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-white"
               />
             </div>
@@ -331,10 +350,11 @@ export const AddEntryModal: React.FC<AddEntryModalProps> = ({ isOpen, onClose, o
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  رابط الموقع الرسمي للبديل
+                  {t('رابط الموقع الرسمي للبديل', 'Alternative Official Website')}
                 </label>
                 <input
                   type="url"
+                  dir="ltr"
                   value={altWebsite}
                   onChange={(e) => setAltWebsite(e.target.value)}
                   placeholder="https://..."
@@ -343,10 +363,11 @@ export const AddEntryModal: React.FC<AddEntryModalProps> = ({ isOpen, onClose, o
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  رابط التحميل المباشر للبديل (اختياري)
+                  {t('رابط التحميل المباشر للبديل (اختياري)', 'Direct Download URL (optional)')}
                 </label>
                 <input
                   type="url"
+                  dir="ltr"
                   value={altDownloadUrl}
                   onChange={(e) => setAltDownloadUrl(e.target.value)}
                   placeholder="https://.../download"
@@ -356,7 +377,9 @@ export const AddEntryModal: React.FC<AddEntryModalProps> = ({ isOpen, onClose, o
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs text-slate-600 dark:text-slate-400">أنظمة التشغيل:</span>
+              <span className="text-xs text-slate-600 dark:text-slate-400">
+                {t('أنظمة التشغيل:', 'Operating Systems:')}
+              </span>
               {(['Windows', 'macOS', 'Linux', 'Web'] as OperatingSystem[]).map((os) => (
                 <button
                   key={os}
@@ -380,13 +403,13 @@ export const AddEntryModal: React.FC<AddEntryModalProps> = ({ isOpen, onClose, o
               onClick={onClose}
               className="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
             >
-              إلغاء
+              {t('إلغاء', 'Cancel')}
             </button>
             <button
               type="submit"
               className="px-5 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-sm font-semibold cursor-pointer"
             >
-              إضافة إلى الدليل
+              {t('إضافة إلى الدليل', 'Add to Directory')}
             </button>
           </div>
         </form>

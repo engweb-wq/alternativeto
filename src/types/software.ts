@@ -31,6 +31,66 @@ export type FeatureTag =
   | 'مونتاج فيديو'
   | 'يعمل على الويب';
 
+export type ReplacementTier =
+  | 'near-equivalent'
+  | 'most-tasks'
+  | 'single-task'
+  | 'complementary'
+  | 'no-practical';
+
+export type FunctionSupportLevel =
+  | 'ممتاز'
+  | 'جيد'
+  | 'محدود'
+  | 'مختلف'
+  | 'غير متوفر'
+  | 'يحتاج تقييم';
+
+export interface ReplacementFunctionRow {
+  fnAr: string;
+  fnEn: string;
+  status: FunctionSupportLevel;
+  noteAr?: string;
+  noteEn?: string;
+}
+
+export interface ReplacementAssessment {
+  targetCommercialId: string;
+  targetCommercialName: string;
+  tier: ReplacementTier;
+  illustrativePercent: number;
+  basisNoteAr: string;
+  basisNoteEn: string;
+  functionRows: ReplacementFunctionRow[];
+}
+
+export type GpuRequirementTier = 'integrated' | 'mid' | 'dedicated';
+
+export interface HardwareProfile {
+  minRamGb: number;
+  recRamGb: number;
+  actualRamUsage: string;
+  gpuTier: GpuRequirementTier;
+  gpuNoteAr: string;
+  gpuNoteEn: string;
+  cpuAr: string;
+  cpuEn: string;
+  lowSpecFriendly: boolean;
+  runsInBrowser: boolean;
+  offlineCapable: boolean;
+  portableAvailable: boolean;
+}
+
+export type MaintenanceStatus = 'active' | 'caution' | 'abandoned';
+
+export type WorkspaceProductTab =
+  | 'directory'
+  | 'stacks'
+  | 'compatibility'
+  | 'migration'
+  | 'hardware-github'
+  | 'academy';
+
 export interface BimArabiaTutorial {
   hasTutorial: boolean;
   title: string;
@@ -125,6 +185,12 @@ export interface UnifiedProgramItem {
   parentCommercial?: SoftwareEntry;
   commercialEntry?: SoftwareEntry;
   alternativeEntry?: FreeAlternative;
+  replacementAssessment?: ReplacementAssessment;
+  hardwareProfile: HardwareProfile;
+  offlineCapable: boolean;
+  portableAvailable: boolean;
+  lowSpecFriendly: boolean;
+  maintenanceStatus: MaintenanceStatus;
 }
 
 export interface CategoryMeta {

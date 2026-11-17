@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { MessageSquarePlus, Star, Trash2 } from 'lucide-react';
 import { ProgramReview } from '../types/software';
+import { AppLanguage, useLanguage } from '../i18n/LanguageContext';
 
 interface ProgramReviewsProps {
   programId: string;
@@ -18,9 +19,9 @@ interface ProgramReviewsProps {
 
 const MAX_COMMENT_LENGTH = 280;
 
-function formatReviewDate(isoDate: string): string {
+function formatReviewDate(isoDate: string, lang: AppLanguage): string {
   try {
-    return new Intl.DateTimeFormat('ar-EG', {
+    return new Intl.DateTimeFormat(lang === 'ar' ? 'ar-EG' : 'en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -46,6 +47,7 @@ export const ProgramReviews: React.FC<ProgramReviewsProps> = ({
   const [comment, setComment] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [submittedNotice, setSubmittedNotice] = useState(false);
+  const { lang, t } = useLanguage();
 
   // Sync star selection when user clicks the top star rating bar or navigates to another program
   useEffect(() => {
@@ -65,17 +67,21 @@ export const ProgramReviews: React.FC<ProgramReviewsProps> = ({
     const trimmedComment = comment.trim();
 
     if (trimmedComment.length < 4) {
-      setErrorMessage('يرجى كتابة مراجعة قصيرة لا تقل عن 4 أحرف.');
+      setErrorMessage(
+        t('يرجى كتابة مراجعة قصيرة لا تقل عن 4 أحرف.', 'Please write a short review of at least 4 characters.')
+      );
       return;
     }
 
     if (selectedStars < 1 || selectedStars > 5) {
-      setErrorMessage('يرجى اختيار التقييم بالنجوم من 1 إلى 5.');
+      setErrorMessage(
+        t('يرجى اختيار التقييم بالنجوم من 1 إلى 5.', 'Please choose a star rating from 1 to 5.')
+      );
       return;
     }
 
     onAddReview(programId, {
-      authorName: authorName.trim() || 'مستخدم بديلك',
+      authorName: authorName.trim() || t('مستخدم بديلك', 'Badeelak User'),
       rating: selectedStars,
       comment: trimmedComment,
     });
@@ -99,10 +105,13 @@ export const ProgramReviews: React.FC<ProgramReviewsProps> = ({
             id="program-reviews-heading"
             className="font-display text-xl font-bold text-slate-900 dark:text-white"
           >
-            مراجعات المستخدمين لـ {programName}
+            {t(`مراجعات المستخدمين لـ ${programName}`, `User Reviews for ${programName}`)}
           </h2>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
-            اكتب انطباعك وتجربتك العملية مع التقييم بالنجوم لمساعدة الآخرين على الاختيار.
+            {t(
+              'اكتب انطباعك وتجربتك العملية مع التقييم بالنجوم لمساعدة الآخرين على الاختيار.',
+              'Share your hands-on experience and star rating to help others decide.'
+            )}
           </p>
         </div>
 
@@ -113,11 +122,15 @@ export const ProgramReviews: React.FC<ProgramReviewsProps> = ({
           <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
             ·
           </span>
-          <span>{ratingCount} تقييم</span>
+          <span>
+            {ratingCount} {t('تقييم', ratingCount === 1 ? 'rating' : 'ratings')}
+          </span>
           <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
             ·
           </span>
-          <span>{reviews.length} مراجعة مكتوبة</span>
+          <span>
+            {reviews.length} {t('مراجعة مكتوبة', reviews.length === 1 ? 'written review' : 'written reviews')}
+          </span>
         </div>
       </div>
 
@@ -130,19 +143,19 @@ export const ProgramReviews: React.FC<ProgramReviewsProps> = ({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
               <MessageSquarePlus className="w-4 h-4 text-blue-700 dark:text-blue-400" />
-              <span>أضف مراجعتك القصيرة</span>
+              <span>{t('أضف مراجعتك القصيرة', 'Write a Short Review')}</span>
             </div>
 
             <div className="flex flex-wrap items-center gap-2.5">
               <span className="text-xs text-slate-500 dark:text-slate-400">
-                التقييم بالنجوم:
+                {t('التقييم بالنجوم:', 'Star rating:')}
               </span>
               <div
                 className="inline-flex items-center gap-0.5"
                 dir="ltr"
                 onMouseLeave={() => setHoverStars(null)}
                 role="group"
-                aria-label="اختر التقييم من 1 إلى 5 نجوم للمراجعة"
+                aria-label={t('اختر التقييم من 1 إلى 5 نجوم للمراجعة', 'Choose 1 to 5 stars for your review')}
               >
                 {[1, 2, 3, 4, 5].map((starValue) => {
                   const isFilled = starValue <= activeStars;
@@ -152,7 +165,7 @@ export const ProgramReviews: React.FC<ProgramReviewsProps> = ({
                       type="button"
                       onClick={() => setSelectedStars(starValue)}
                       onMouseEnter={() => setHoverStars(starValue)}
-                      aria-label={`${starValue} من 5 نجوم`}
+                      aria-label={t(`${starValue} من 5 نجوم`, `${starValue} out of 5 stars`)}
                       aria-pressed={selectedStars === starValue}
                       className="p-1 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 cursor-pointer transition-transform hover:scale-110"
                     >
@@ -179,7 +192,7 @@ export const ProgramReviews: React.FC<ProgramReviewsProps> = ({
                 htmlFor={`review-author-${programId}`}
                 className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5"
               >
-                الاسم أو التخصص (اختياري)
+                {t('الاسم أو التخصص (اختياري)', 'Name or Role (optional)')}
               </label>
               <input
                 id={`review-author-${programId}`}
@@ -187,7 +200,7 @@ export const ProgramReviews: React.FC<ProgramReviewsProps> = ({
                 maxLength={50}
                 value={authorName}
                 onChange={(e) => setAuthorName(e.target.value)}
-                placeholder="مثال: م. عمر — مهندس معماري"
+                placeholder={t('مثال: م. عمر — مهندس معماري', 'e.g. Omar — BIM Architect')}
                 className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
               />
             </div>
@@ -198,7 +211,7 @@ export const ProgramReviews: React.FC<ProgramReviewsProps> = ({
                   htmlFor={`review-comment-${programId}`}
                   className="block text-xs font-medium text-slate-700 dark:text-slate-300"
                 >
-                  نص المراجعة القصيرة *
+                  {t('نص المراجعة القصيرة *', 'Short Review *')}
                 </label>
                 <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
                   {comment.length} / {MAX_COMMENT_LENGTH}
@@ -213,7 +226,10 @@ export const ProgramReviews: React.FC<ProgramReviewsProps> = ({
                   setComment(e.target.value);
                   if (errorMessage) setErrorMessage(null);
                 }}
-                placeholder={`شارك تجربتك المختصرة مع ${programName} (الأداء، سهولة التعلم، دعم العربية...)`}
+                placeholder={t(
+                  `شارك تجربتك المختصرة مع ${programName} (الأداء، سهولة التعلم، دعم العربية...)`,
+                  `Share your brief experience with ${programName} (performance, learning curve, workflow...)`
+                )}
                 className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 resize-none"
               />
             </div>
@@ -227,11 +243,17 @@ export const ProgramReviews: React.FC<ProgramReviewsProps> = ({
                 </span>
               ) : submittedNotice ? (
                 <span className="text-emerald-700 dark:text-emerald-400 font-medium">
-                  تم حفظ ونشر مراجعتك محلياً في قسم المراجعات.
+                  {t(
+                    'تم حفظ ونشر مراجعتك محلياً في قسم المراجعات.',
+                    'Your review has been saved and published locally.'
+                  )}
                 </span>
               ) : (
                 <span className="text-slate-500 dark:text-slate-400">
-                  تُحفظ المراجعات في متصفحك وتظهر مباشرة ضمن هذه الصفحة.
+                  {t(
+                    'تُحفظ المراجعات في متصفحك وتظهر مباشرة ضمن هذه الصفحة.',
+                    'Reviews are saved in your browser and appear right here.'
+                  )}
                 </span>
               )}
             </div>
@@ -240,7 +262,7 @@ export const ProgramReviews: React.FC<ProgramReviewsProps> = ({
               type="submit"
               className="px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer"
             >
-              نشر المراجعة
+              {t('نشر المراجعة', 'Post Review')}
             </button>
           </div>
         </form>
@@ -248,10 +270,16 @@ export const ProgramReviews: React.FC<ProgramReviewsProps> = ({
         {reviews.length === 0 ? (
           <div className="p-8 text-center space-y-2">
             <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
-              لا توجد مراجعات مكتوبة لبرنامج {programName} حتى الآن.
+              {t(
+                `لا توجد مراجعات مكتوبة لبرنامج ${programName} حتى الآن.`,
+                `No written reviews for ${programName} yet.`
+              )}
             </p>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              أضف مراجعتك القصيرة أعلاه مع تقييم النجوم لمشاركة رأيك مع الزوار.
+              {t(
+                'أضف مراجعتك القصيرة أعلاه مع تقييم النجوم لمشاركة رأيك مع الزوار.',
+                'Add your short review and star rating above to share your insights.'
+              )}
             </p>
           </div>
         ) : (
@@ -269,7 +297,7 @@ export const ProgramReviews: React.FC<ProgramReviewsProps> = ({
                     <div
                       className="inline-flex items-center gap-0.5"
                       dir="ltr"
-                      aria-label={`تقييم ${rev.rating} من 5 نجوم`}
+                      aria-label={t(`تقييم ${rev.rating} من 5 نجوم`, `Rated ${rev.rating} out of 5 stars`)}
                     >
                       {[1, 2, 3, 4, 5].map((n) => (
                         <Star
@@ -293,18 +321,18 @@ export const ProgramReviews: React.FC<ProgramReviewsProps> = ({
                       dateTime={rev.createdAt}
                       className="text-slate-500 dark:text-slate-400 tabular-nums"
                     >
-                      {formatReviewDate(rev.createdAt)}
+                      {formatReviewDate(rev.createdAt, lang)}
                     </time>
                   </div>
 
                   <button
                     type="button"
                     onClick={() => onDeleteReview(programId, rev.id)}
-                    aria-label={`حذف مراجعة ${rev.authorName}`}
+                    aria-label={t(`حذف مراجعة ${rev.authorName}`, `Delete review by ${rev.authorName}`)}
                     className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-red-700 dark:text-slate-400 dark:hover:text-red-400 transition-colors cursor-pointer"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                    <span>حذف</span>
+                    <span>{t('حذف', 'Delete')}</span>
                   </button>
                 </div>
 

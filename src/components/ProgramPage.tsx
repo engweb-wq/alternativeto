@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import {
+  ArrowLeft,
   ArrowRight,
   ArrowUpLeft,
+  ArrowUpRight,
   Bookmark,
   Check,
   CheckCircle2,
@@ -17,7 +19,6 @@ import {
 import {
   BIM_ARABIA_BEST_ALTERNATIVES_URL,
   BIM_ARABIA_CHANNEL_URL,
-  CATEGORIES,
 } from '../data/catalog';
 import {
   BimArabiaTutorial,
@@ -31,6 +32,7 @@ import { StarRating } from './StarRating';
 import { ShareButton } from './ShareButton';
 import { ProgramReviews } from './ProgramReviews';
 import { SimilarProgramRecommendation } from '../utils/recommendations';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface ProgramPageProps {
   program: UnifiedProgramItem;
@@ -96,6 +98,18 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
   const [bimVideoUrl, setBimVideoUrl] = useState('');
   const [bimVideoTitle, setBimVideoTitle] = useState('');
 
+  const {
+    t,
+    isAr,
+    translateCategory,
+    translateFeature,
+    translateLicenseCategory,
+    translateLicenseType,
+    translateArabicSupport,
+  } = useLanguage();
+  const BackArrow = isAr ? ArrowRight : ArrowLeft;
+  const NavArrow = isAr ? ArrowUpLeft : ArrowUpRight;
+
   const resolvedDownloadUrl = program.downloadUrl ?? program.websiteUrl;
 
   useEffect(() => {
@@ -104,7 +118,7 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
     setDownloadSavedNotice(false);
   }, [program.id, program.downloadUrl, program.websiteUrl]);
 
-  const categoryLabel = CATEGORIES.find((c) => c.id === program.category)?.label ?? program.category;
+  const categoryLabel = translateCategory(program.category);
   const commercial = program.commercialEntry;
   const sortedAlternatives = commercial
     ? [...commercial.alternatives].sort((a, b) => {
@@ -139,7 +153,7 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
       features: commercial.features,
       websiteUrl: altUrl.trim() || 'https://alternativeto.net/',
       downloadUrl: altDownloadUrl.trim() || altUrl.trim() || 'https://alternativeto.net/',
-      keyAdvantages: ['مقترح من مجتمع بديلك'],
+      keyAdvantages: [t('مقترح من مجتمع بديلك', 'Community-submitted alternative')],
       fileFormats: commercial.fileFormats,
       arabicSupport: 'جيد',
     });
@@ -169,7 +183,7 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
       hasTutorial: true,
       title: bimVideoTitle.trim() || `فيديو شرح ${program.name} على قناة بيم أرابيا`,
       url: bimVideoUrl.trim(),
-      topics: ['رابط فيديو مضاف من المستخدم لصفحة البرنامج'],
+      topics: [t('رابط فيديو مضاف من المستخدم لصفحة البرنامج', 'User-linked tutorial video')],
       target: program.kind === 'commercial' ? 'commercial' : 'alternative',
     });
 
@@ -182,13 +196,13 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
     <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-8 sm:py-10 space-y-8">
       {/* Breadcrumb Navigation */}
       <div className="flex flex-wrap items-center justify-between gap-4 pb-5 border-b border-slate-200 dark:border-slate-800">
-        <nav aria-label="مسار التنقل" className="flex items-center gap-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+        <nav aria-label={t('مسار التنقل', 'Breadcrumb')} className="flex items-center gap-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
           <button
             type="button"
             onClick={onBack}
             className="hover:text-slate-900 dark:hover:text-white cursor-pointer"
           >
-            الدليل الرئيسي
+            {t('الدليل الرئيسي', 'Main Directory')}
           </button>
           <span aria-hidden="true">/</span>
           <span>{categoryLabel}</span>
@@ -201,8 +215,8 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
           onClick={onBack}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 transition-colors cursor-pointer"
         >
-          <ArrowRight className="w-4 h-4" />
-          <span>العودة إلى الدليل</span>
+          <BackArrow className="w-4 h-4" />
+          <span>{t('العودة إلى الدليل', 'Back to Directory')}</span>
         </button>
       </div>
 
@@ -231,7 +245,7 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                           : 'text-amber-700 dark:text-amber-400'
                       }`}
                     >
-                      {program.licenseCategory}
+                      {translateLicenseCategory(program.licenseCategory)}
                     </span>
                     <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
                       ·
@@ -247,7 +261,7 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                           ·
                         </span>
                         <span className="font-semibold text-emerald-700 dark:text-emerald-400">
-                          {program.originLabel ?? 'بديل عربي'}
+                          {isAr ? program.originLabel ?? 'بديل عربي' : 'Arabic Origin'}
                         </span>
                       </>
                     )}
@@ -256,7 +270,7 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                     {program.name}
                   </h1>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {program.arabicName} · {program.vendorOrBadge}
+                    {isAr ? `${program.arabicName} · ${program.vendorOrBadge}` : program.vendorOrBadge}
                   </p>
                 </div>
               </div>
@@ -279,7 +293,11 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                   }`}
                 >
                   <ArrowLeftRight className="w-4 h-4" />
-                  <span>{compareIds.has(program.id) ? 'مضاف للمقارنة' : 'أضف للمقارنة'}</span>
+                  <span>
+                    {compareIds.has(program.id)
+                      ? t('مضاف للمقارنة', 'In Compare')
+                      : t('أضف للمقارنة', 'Add to Compare')}
+                  </span>
                 </button>
 
                 {program.kind === 'alternative' && (
@@ -309,7 +327,11 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                       }`}
                     >
                       {savedAltIds.has(program.id) ? <Check className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
-                      <span>{savedAltIds.has(program.id) ? 'في حقيبة أدواتي' : 'حفظ في حقيبة أدواتي'}</span>
+                      <span>
+                        {savedAltIds.has(program.id)
+                          ? t('في حقيبة أدواتي', 'In My Toolkit')
+                          : t('حفظ في حقيبة أدواتي', 'Save to Toolkit')}
+                      </span>
                     </button>
                   </>
                 )}
@@ -325,7 +347,7 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                   }`}
                 >
                   <Download className="w-4 h-4" />
-                  <span>تحميل</span>
+                  <span>{t('تحميل', 'Download')}</span>
                 </a>
 
                 {program.githubUrl && (
@@ -347,7 +369,7 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900 text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap shrink-0"
                 >
-                  <span>الموقع الرسمي</span>
+                  <span>{t('الموقع الرسمي', 'Official Website')}</span>
                   <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               </div>
@@ -361,7 +383,7 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                 userRating={program.userRating}
                 onRate={(stars) => onRateProgram(program.id, stars)}
                 size="md"
-                label="تقييم المستخدمين (اضغط للتقييم من 1 إلى 5 نجوم):"
+                label={t('تقييم المستخدمين (اضغط للتقييم من 1 إلى 5 نجوم):', 'User Rating (click 1–5 stars to rate):')}
               />
 
               <button
@@ -376,7 +398,7 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                 }}
                 className="text-xs font-semibold text-blue-700 dark:text-blue-400 hover:underline whitespace-nowrap shrink-0 cursor-pointer tabular-nums"
               >
-                اكتب مراجعة قصيرة ({reviews.length})
+                {t('اكتب مراجعة قصيرة', 'Write a Short Review')} ({reviews.length})
               </button>
             </div>
 
@@ -387,19 +409,31 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
             {/* Technical Spec Table */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-100 dark:border-slate-800 text-sm">
               <div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">أنظمة التشغيل المدعومة</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+                  {t('أنظمة التشغيل المدعومة', 'Supported Operating Systems')}
+                </p>
                 <p className="font-medium text-slate-900 dark:text-white">{program.platforms.join(' · ')}</p>
               </div>
               <div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">دعم اللغة العربية</p>
-                <p className="font-medium text-slate-900 dark:text-white">{program.arabicSupport}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+                  {t('دعم اللغة العربية', 'Arabic Language Support')}
+                </p>
+                <p className="font-medium text-slate-900 dark:text-white">
+                  {translateArabicSupport(program.arabicSupport)}
+                </p>
               </div>
               <div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">الميزات الرئيسية</p>
-                <p className="font-medium text-slate-900 dark:text-white">{program.features.join(' · ')}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+                  {t('الميزات الرئيسية', 'Key Features')}
+                </p>
+                <p className="font-medium text-slate-900 dark:text-white">
+                  {program.features.map(translateFeature).join(' · ')}
+                </p>
               </div>
               <div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">صيغ الملفات</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+                  {t('صيغ الملفات', 'Supported Formats')}
+                </p>
                 <p className="font-mono text-xs sm:text-sm text-slate-900 dark:text-white">
                   {program.fileFormats.join(', ')}
                 </p>
@@ -412,8 +446,8 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                 <div className="min-w-0">
                   <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">
                     {program.licenseCategory === 'مدفوع'
-                      ? 'مصدر التحميل الرسمي / النسخة التجريبية'
-                      : 'مصدر التحميل الرسمي أو مفتوح المصدر'}
+                      ? t('مصدر التحميل الرسمي / النسخة التجريبية', 'Official Download / Trial Source')
+                      : t('مصدر التحميل الرسمي أو مفتوح المصدر', 'Official / Open-Source Download URL')}
                   </p>
                   <a
                     href={resolvedDownloadUrl}
@@ -432,7 +466,9 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                     onClick={() => setShowDownloadEdit((v) => !v)}
                     className="text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-blue-700 dark:hover:text-blue-400 hover:underline cursor-pointer whitespace-nowrap"
                   >
-                    {showDownloadEdit ? 'إغلاق التعديل' : 'تحديث رابط التحميل'}
+                    {showDownloadEdit
+                      ? t('إغلاق التعديل', 'Close Editor')
+                      : t('تحديث رابط التحميل', 'Update Download Link')}
                   </button>
 
                   <a
@@ -446,7 +482,7 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                     }`}
                   >
                     <Download className="w-3.5 h-3.5" />
-                    <span>تحميل مباشر</span>
+                    <span>{t('تحميل مباشر', 'Direct Download')}</span>
                     <ExternalLink className="w-3 h-3" />
                   </a>
                 </div>
@@ -454,7 +490,10 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
 
               {downloadSavedNotice && (
                 <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400">
-                  تم تحديث وحفظ رابط التحميل الرسمي في حالة البرنامج.
+                  {t(
+                    'تم تحديث وحفظ رابط التحميل الرسمي في حالة البرنامج.',
+                    'Official download link updated and saved to program state.'
+                  )}
                 </p>
               )}
 
@@ -473,7 +512,7 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                     type="submit"
                     className="px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold cursor-pointer whitespace-nowrap shrink-0"
                   >
-                    حفظ رابط التحميل
+                    {t('حفظ رابط التحميل', 'Save Download URL')}
                   </button>
                 </form>
               )}
@@ -482,9 +521,9 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
             {program.kind === 'alternative' && program.alternativeEntry && (
               <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
                 <h2 className="font-display text-lg font-bold text-slate-900 dark:text-white">
-                  أبرز مزايا {program.name}
+                  {t(`أبرز مزايا ${program.name}`, `Key Advantages of ${program.name}`)}
                 </h2>
-                <ul className="space-y-1.5 text-sm text-slate-600 dark:text-slate-300 list-disc pr-5">
+                <ul className="space-y-1.5 text-sm text-slate-600 dark:text-slate-300 list-disc ps-5">
                   {program.alternativeEntry.keyAdvantages.map((adv, idx) => (
                     <li key={idx}>{adv}</li>
                   ))}
@@ -500,8 +539,13 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                       }}
                       className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 dark:text-blue-400 hover:underline"
                     >
-                      <span>عرض صفحة البرنامج التجاري المقابل ({program.parentCommercial.name}) ومقارنته</span>
-                      <ArrowUpLeft className="w-4 h-4" />
+                      <span>
+                        {t(
+                          `عرض صفحة البرنامج التجاري المقابل (${program.parentCommercial.name}) ومقارنته`,
+                          `View commercial counterpart (${program.parentCommercial.name}) & compare`
+                        )}
+                      </span>
+                      <NavArrow className="w-4 h-4" />
                     </a>
                   </div>
                 )}
@@ -515,7 +559,11 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
               <div className="space-y-4">
                 <div className="flex items-center justify-between gap-4">
                   <h2 className="font-display text-xl font-bold text-slate-900 dark:text-white">
-                    البدائل المجانية ومفتوحة المصدر لـ {commercial.name} ({sortedAlternatives.length})
+                    {t(
+                      `البدائل المجانية ومفتوحة المصدر لـ ${commercial.name}`,
+                      `Free & Open-Source Alternatives to ${commercial.name}`
+                    )}{' '}
+                    ({sortedAlternatives.length})
                   </h2>
                   <button
                     type="button"
@@ -523,7 +571,7 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                     className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
                   >
                     <Plus className="w-4 h-4" />
-                    <span>اقترح بديلاً مجانياً</span>
+                    <span>{t('اقترح بديلاً مجانياً', 'Suggest Alternative')}</span>
                   </button>
                 </div>
 
@@ -535,43 +583,45 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                          اسم البديل المجاني *
+                          {t('اسم البديل المجاني *', 'Alternative Name *')}
                         </label>
                         <input
                           type="text"
                           required
                           value={altName}
                           onChange={(e) => setAltName(e.target.value)}
-                          placeholder="مثال: FreeCAD"
+                          placeholder={t('مثال: FreeCAD', 'e.g. FreeCAD')}
                           className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-sm"
                         />
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                          نوع الترخيص
+                          {t('نوع الترخيص', 'License Type')}
                         </label>
                         <select
                           value={altLicense}
                           onChange={(e) => setAltLicense(e.target.value as LicenseType)}
                           className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-sm"
                         >
-                          <option value="مفتوح المصدر">مفتوح المصدر</option>
-                          <option value="مجاني بالكامل">مجاني بالكامل</option>
-                          <option value="مجاني للاستخدام الشخصي">مجاني للاستخدام الشخصي</option>
+                          <option value="مفتوح المصدر">{translateLicenseType('مفتوح المصدر')}</option>
+                          <option value="مجاني بالكامل">{translateLicenseType('مجاني بالكامل')}</option>
+                          <option value="مجاني للاستخدام الشخصي">
+                            {translateLicenseType('مجاني للاستخدام الشخصي')}
+                          </option>
                         </select>
                       </div>
                     </div>
 
                     <div>
                       <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                        أبرز ميزة في البديل *
+                        {t('أبرز ميزة في البديل *', 'Key Advantage / Tagline *')}
                       </label>
                       <input
                         type="text"
                         required
                         value={altTagline}
                         onChange={(e) => setAltTagline(e.target.value)}
-                        placeholder="وصف مختصر..."
+                        placeholder={t('وصف مختصر...', 'Short description...')}
                         className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-sm"
                       />
                     </div>
@@ -579,10 +629,11 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                          الموقع الرسمي
+                          {t('الموقع الرسمي', 'Official Website')}
                         </label>
                         <input
                           type="url"
+                          dir="ltr"
                           value={altUrl}
                           onChange={(e) => setAltUrl(e.target.value)}
                           placeholder="https://..."
@@ -591,10 +642,11 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                          رابط التحميل المباشر (اختياري)
+                          {t('رابط التحميل المباشر (اختياري)', 'Direct Download URL (optional)')}
                         </label>
                         <input
                           type="url"
+                          dir="ltr"
                           value={altDownloadUrl}
                           onChange={(e) => setAltDownloadUrl(e.target.value)}
                           placeholder="https://.../download"
@@ -626,13 +678,13 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                         onClick={() => setShowSuggestForm(false)}
                         className="px-3.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                       >
-                        إلغاء
+                        {t('إلغاء', 'Cancel')}
                       </button>
                       <button
                         type="submit"
                         className="px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold cursor-pointer"
                       >
-                        إضافة البديل
+                        {t('إضافة البديل', 'Submit Alternative')}
                       </button>
                     </div>
                   </form>
@@ -649,12 +701,12 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                             </span>
                             {alt.isBestFree && (
                               <span className="font-semibold text-emerald-700 dark:text-emerald-400">
-                                أفضل بديل مجاني
+                                {t('أفضل بديل مجاني', 'Best Free Alternative')}
                               </span>
                             )}
                             <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
                             <span className="text-slate-600 dark:text-slate-400">
-                              {alt.license} ({alt.licenseCode})
+                              {translateLicenseType(alt.license)} ({alt.licenseCode})
                             </span>
                             <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
                             <span className="text-slate-500 dark:text-slate-400">{alt.platforms.join(' / ')}</span>
@@ -662,7 +714,7 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                               <>
                                 <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
                                 <span className="font-semibold text-emerald-700 dark:text-emerald-400">
-                                  {alt.originLabel ?? 'بديل عربي'}
+                                  {isAr ? alt.originLabel ?? 'بديل عربي' : 'Arabic Origin'}
                                 </span>
                               </>
                             )}
@@ -706,7 +758,7 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                             }`}
                           >
                             {savedAltIds.has(alt.id) ? <Check className="w-3.5 h-3.5" /> : <Bookmark className="w-3.5 h-3.5" />}
-                            <span>{savedAltIds.has(alt.id) ? 'محفوظ' : 'حفظ'}</span>
+                            <span>{savedAltIds.has(alt.id) ? t('محفوظ', 'Saved') : t('حفظ', 'Save')}</span>
                           </button>
 
                           <button
@@ -719,7 +771,7 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                             }`}
                           >
                             <ArrowLeftRight className="w-3.5 h-3.5" />
-                            <span>{compareIds.has(alt.id) ? 'في المقارنة' : 'قارن'}</span>
+                            <span>{compareIds.has(alt.id) ? t('في المقارنة', 'Comparing') : t('قارن', 'Compare')}</span>
                           </button>
                         </div>
                       </div>
@@ -734,7 +786,7 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                           count={alt.ratingCount ?? 35}
                           userRating={alt.userRating}
                           onRate={(stars) => onRateProgram(alt.id, stars)}
-                          label="قيّم جودة البديل:"
+                          label={t('قيّم جودة البديل:', 'Rate this alternative:')}
                         />
                       </div>
 
@@ -746,7 +798,7 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                           className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold transition-colors whitespace-nowrap shrink-0"
                         >
                           <Download className="w-3.5 h-3.5" />
-                          <span>تحميل</span>
+                          <span>{t('تحميل', 'Download')}</span>
                         </a>
 
                         <a
@@ -757,8 +809,8 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                           }}
                           className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900 text-xs font-semibold transition-colors"
                         >
-                          <span>صفحة {alt.name}</span>
-                          <ArrowUpLeft className="w-3.5 h-3.5" />
+                          <span>{t(`صفحة ${alt.name}`, `${alt.name} Page`)}</span>
+                          <NavArrow className="w-3.5 h-3.5" />
                         </a>
 
                         {alt.githubUrl && (
@@ -781,7 +833,7 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-red-50 hover:bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-300 text-xs font-semibold transition-colors"
                           >
                             <Youtube className="w-4 h-4" />
-                            <span>فيديو الشرح في بيم أرابيا</span>
+                            <span>{t('فيديو الشرح في بيم أرابيا', 'BIM Arabia Tutorial')}</span>
                             <ExternalLink className="w-3 h-3" />
                           </a>
                         )}
@@ -791,7 +843,7 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                           onClick={() => setCompareAltId(alt.id)}
                           className="text-xs font-medium text-blue-700 dark:text-blue-400 hover:underline cursor-pointer"
                         >
-                          مقارنة في الجدول أدناه
+                          {t('مقارنة في الجدول أدناه', 'Compare in Table Below')}
                         </button>
                       </div>
                     </div>
@@ -802,50 +854,55 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
               {activeCompareAlt && (
                 <div className="space-y-3">
                   <h2 className="font-display text-lg font-bold text-slate-900 dark:text-white">
-                    مقارنة مباشرة: {commercial.name} مقابل {activeCompareAlt.name}
+                    {t(
+                      `مقارنة مباشرة: ${commercial.name} مقابل ${activeCompareAlt.name}`,
+                      `Head-to-Head: ${commercial.name} vs ${activeCompareAlt.name}`
+                    )}
                   </h2>
                   <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900">
-                    <table className="w-full text-right text-xs sm:text-sm">
+                    <table className="w-full text-start text-xs sm:text-sm">
                       <thead className="bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800">
                         <tr>
-                          <th className="py-3 px-4 font-semibold">المعيار</th>
-                          <th className="py-3 px-4 font-semibold">{commercial.name}</th>
-                          <th className="py-3 px-4 font-semibold text-emerald-700 dark:text-emerald-400">
+                          <th className="py-3 px-4 font-semibold text-start">{t('المعيار', 'Criteria')}</th>
+                          <th className="py-3 px-4 font-semibold text-start">{commercial.name}</th>
+                          <th className="py-3 px-4 font-semibold text-start text-emerald-700 dark:text-emerald-400">
                             {activeCompareAlt.name}
                           </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                         <tr>
-                          <td className="py-3 px-4 font-medium">متوسط تقييم المستخدمين</td>
+                          <td className="py-3 px-4 font-medium">
+                            {t('متوسط تقييم المستخدمين', 'Average User Rating')}
+                          </td>
                           <td className="py-3 px-4 tabular-nums">
-                            {(commercial.rating ?? program.rating).toFixed(1)} / 5 ({commercial.ratingCount ?? program.ratingCount} تقييم)
+                            {(commercial.rating ?? program.rating).toFixed(1)} / 5 ({commercial.ratingCount ?? program.ratingCount} {t('تقييم', 'ratings')})
                           </td>
                           <td className="py-3 px-4 font-semibold text-emerald-700 dark:text-emerald-400 tabular-nums">
-                            {(activeCompareAlt.rating ?? 4.6).toFixed(1)} / 5 ({activeCompareAlt.ratingCount ?? 35} تقييم)
+                            {(activeCompareAlt.rating ?? 4.6).toFixed(1)} / 5 ({activeCompareAlt.ratingCount ?? 35} {t('تقييم', 'ratings')})
                           </td>
                         </tr>
                         <tr>
-                          <td className="py-3 px-4 font-medium">الترخيص</td>
+                          <td className="py-3 px-4 font-medium">{t('الترخيص', 'License')}</td>
                           <td className="py-3 px-4 text-slate-600 dark:text-slate-400">{commercial.pricingNote}</td>
                           <td className="py-3 px-4 text-emerald-700 dark:text-emerald-400 font-medium">
-                            {activeCompareAlt.license} ({activeCompareAlt.licenseCode})
+                            {translateLicenseType(activeCompareAlt.license)} ({activeCompareAlt.licenseCode})
                           </td>
                         </tr>
                         <tr>
-                          <td className="py-3 px-4 font-medium">الأنظمة</td>
+                          <td className="py-3 px-4 font-medium">{t('الأنظمة', 'Platforms')}</td>
                           <td className="py-3 px-4 text-slate-600 dark:text-slate-400">{commercial.platforms.join(' · ')}</td>
                           <td className="py-3 px-4">{activeCompareAlt.platforms.join(' · ')}</td>
                         </tr>
                         <tr>
-                          <td className="py-3 px-4 font-medium">صيغ الملفات</td>
+                          <td className="py-3 px-4 font-medium">{t('صيغ الملفات', 'File Formats')}</td>
                           <td className="py-3 px-4 font-mono text-xs">{commercial.fileFormats.join(', ')}</td>
                           <td className="py-3 px-4 font-mono text-xs">{activeCompareAlt.fileFormats.join(', ')}</td>
                         </tr>
                         <tr>
-                          <td className="py-3 px-4 font-medium">دعم العربية</td>
-                          <td className="py-3 px-4">{commercial.arabicSupport}</td>
-                          <td className="py-3 px-4">{activeCompareAlt.arabicSupport}</td>
+                          <td className="py-3 px-4 font-medium">{t('دعم العربية', 'Arabic Support')}</td>
+                          <td className="py-3 px-4">{translateArabicSupport(commercial.arabicSupport)}</td>
+                          <td className="py-3 px-4">{translateArabicSupport(activeCompareAlt.arabicSupport)}</td>
                         </tr>
                       </tbody>
                     </table>
@@ -878,17 +935,19 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                   id="similar-programs-heading"
                   className="font-display text-xl font-bold text-slate-900 dark:text-white mb-1"
                 >
-                  برامج مشابهة لـ {program.name}
+                  {t(`برامج مشابهة لـ ${program.name}`, `Programs Similar to ${program.name}`)}
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                  اقتراحات مبنية على الفئات والميزات المشتركة لاكتشاف بدائل وأدوات إضافية مناسبة.
+                  {t(
+                    'اقتراحات مبنية على الفئات والميزات المشتركة لاكتشاف بدائل وأدوات إضافية مناسبة.',
+                    'Recommendations based on shared categories and capabilities to discover related tools.'
+                  )}
                 </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {similarPrograms.map(({ program: sim, reasonSummary }) => {
-                  const simCatLabel =
-                    CATEGORIES.find((c) => c.id === sim.category)?.label ?? sim.category;
+                  const simCatLabel = translateCategory(sim.category);
 
                   return (
                     <article
@@ -919,7 +978,7 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                                 </a>
                               </h3>
                               <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                                {sim.arabicName} · {simCatLabel}
+                                {isAr ? `${sim.arabicName} · ${simCatLabel}` : simCatLabel}
                               </p>
                             </div>
                           </div>
@@ -933,7 +992,7 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                                 : 'text-amber-700 dark:text-amber-400'
                             }`}
                           >
-                            {sim.licenseCategory}
+                            {translateLicenseCategory(sim.licenseCategory)}
                           </span>
                         </div>
 
@@ -942,13 +1001,13 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                         </p>
 
                         <p className="text-xs font-medium text-blue-700 dark:text-blue-400">
-                          وجه التشابه: {reasonSummary}
+                          {t('وجه التشابه:', 'Match reason:')} {reasonSummary}
                         </p>
                       </div>
 
                       <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
                         <span className="text-xs font-medium text-slate-600 dark:text-slate-300 tabular-nums">
-                          ★ {sim.rating.toFixed(1)} ({sim.ratingCount} تقييم)
+                          ★ {sim.rating.toFixed(1)} ({sim.ratingCount} {t('تقييم', 'ratings')})
                         </span>
 
                         <a
@@ -959,8 +1018,8 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                           }}
                           className="inline-flex items-center gap-1 text-xs font-semibold text-slate-900 dark:text-white hover:text-blue-700 dark:hover:text-blue-400 transition-colors whitespace-nowrap shrink-0"
                         >
-                          <span>صفحة البرنامج</span>
-                          <ArrowUpLeft className="w-3.5 h-3.5" />
+                          <span>{t('صفحة البرنامج', 'Program Page')}</span>
+                          <NavArrow className="w-3.5 h-3.5" />
                         </a>
                       </div>
                     </article>
@@ -977,7 +1036,7 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
             <div className="flex items-center gap-2.5 text-red-700 dark:text-red-400">
               <Youtube className="w-5 h-5 shrink-0" />
               <h2 className="font-display text-base font-bold text-slate-900 dark:text-white">
-                فيديو الشرح في قناة بيم أرابيا
+                {t('فيديو الشرح في قناة بيم أرابيا', 'BIM Arabia Tutorial Video')}
               </h2>
             </div>
 
@@ -985,14 +1044,19 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
               <div className="space-y-4">
                 <div className="flex items-start gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
                   <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
-                  <span>تم التحقق: يتوفر شرح لهذا البرنامج على قناة بيم أرابيا (م. عمر سليم)</span>
+                  <span>
+                    {t(
+                      'تم التحقق: يتوفر شرح لهذا البرنامج على قناة بيم أرابيا (م. عمر سليم)',
+                      'Verified: Tutorial available on BIM Arabia channel (Eng. Omar Selim)'
+                    )}
+                  </span>
                 </div>
 
                 <div>
                   <p className="font-display text-sm font-bold text-slate-900 dark:text-white mb-1.5">
                     {program.bimArabiaTutorial.title}
                   </p>
-                  <ul className="space-y-1 text-xs text-slate-600 dark:text-slate-400 list-disc pr-4">
+                  <ul className="space-y-1 text-xs text-slate-600 dark:text-slate-400 list-disc ps-4">
                     {program.bimArabiaTutorial.topics.map((topic, i) => (
                       <li key={i}>{topic}</li>
                     ))}
@@ -1006,14 +1070,19 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                   className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-red-700 hover:bg-red-800 text-white text-xs sm:text-sm font-semibold transition-colors"
                 >
                   <Youtube className="w-4 h-4" />
-                  <span>فتح رابط الشرح على يوتيوب</span>
+                  <span>{t('فتح رابط الشرح على يوتيوب', 'Watch Tutorial on YouTube')}</span>
                   <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               </div>
             ) : (
               <div className="space-y-4">
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                  نتيجة التحقق: لا يوجد رابط فيديو مخصص لبرنامج <span className="font-semibold text-slate-900 dark:text-white">{program.name}</span> مسجل في الدليل بعد ضمن قناة بيم أرابيا.
+                  {t(
+                    'نتيجة التحقق: لا يوجد رابط فيديو مخصص لبرنامج ',
+                    'Check result: No dedicated video link is listed yet for '
+                  )}
+                  <span className="font-semibold text-slate-900 dark:text-white">{program.name}</span>
+                  {t(' مسجل في الدليل بعد ضمن قناة بيم أرابيا.', ' in the BIM Arabia directory.')}
                 </p>
 
                 <a
@@ -1023,7 +1092,7 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                   className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-100 text-xs sm:text-sm font-semibold transition-colors"
                 >
                   <Search className="w-4 h-4" />
-                  <span>التحقق والبحث في قناة @omar_selim1</span>
+                  <span>{t('التحقق والبحث في قناة @omar_selim1', 'Search @omar_selim1 Channel')}</span>
                   <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               </div>
@@ -1037,7 +1106,9 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                 className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-700 dark:text-red-400 hover:underline"
               >
                 <Youtube className="w-3.5 h-3.5 shrink-0" />
-                <span>تصفح سلسلة «أفضل البدائل» على قناة بيم أرابيا</span>
+                <span>
+                  {t('تصفح سلسلة «أفضل البدائل» على قناة بيم أرابيا', 'Browse "Best Alternatives" Series')}
+                </span>
                 <ExternalLink className="w-3 h-3 shrink-0" />
               </a>
             </div>
@@ -1049,8 +1120,8 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                 className="text-xs font-medium text-blue-700 dark:text-blue-400 hover:underline cursor-pointer"
               >
                 {program.bimArabiaTutorial?.hasTutorial
-                  ? 'تحديث أو إضافة رابط فيديو مباشر من القناة'
-                  : 'وجدت فيديو شرح في القناة؟ أضف الرابط هنا'}
+                  ? t('تحديث أو إضافة رابط فيديو مباشر من القناة', 'Update or add direct channel video link')
+                  : t('وجدت فيديو شرح في القناة؟ أضف الرابط هنا', 'Found a tutorial on the channel? Link it here')}
               </button>
 
               {showBimAttachForm && (
@@ -1058,6 +1129,7 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                   <input
                     type="url"
                     required
+                    dir="ltr"
                     value={bimVideoUrl}
                     onChange={(e) => setBimVideoUrl(e.target.value)}
                     placeholder="https://www.youtube.com/watch?v=..."
@@ -1067,14 +1139,14 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                     type="text"
                     value={bimVideoTitle}
                     onChange={(e) => setBimVideoTitle(e.target.value)}
-                    placeholder="عنوان الفيديو (اختياري)"
+                    placeholder={t('عنوان الفيديو (اختياري)', 'Video title (optional)')}
                     className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs"
                   />
                   <button
                     type="submit"
                     className="w-full px-3 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold cursor-pointer"
                   >
-                    ربط الفيديو بصفحة البرنامج
+                    {t('ربط الفيديو بصفحة البرنامج', 'Link Video to Program')}
                   </button>
                 </form>
               )}
@@ -1085,7 +1157,7 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
           {similarPrograms.length > 0 && (
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-3">
               <h2 className="font-display text-base font-bold text-slate-900 dark:text-white">
-                وصول سريع لبرامج مشابهة
+                {t('وصول سريع لبرامج مشابهة', 'Quick Access: Similar Tools')}
               </h2>
               <ul className="divide-y divide-slate-100 dark:divide-slate-800">
                 {similarPrograms.slice(0, 4).map(({ program: rel, sharedFeatures }) => (
@@ -1102,8 +1174,8 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                         {rel.name}
                       </a>
                       <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums truncate block">
-                        {rel.licenseCategory} · ★ {rel.rating.toFixed(1)}
-                        {sharedFeatures.length > 0 ? ` · ${sharedFeatures[0]}` : ''}
+                        {translateLicenseCategory(rel.licenseCategory)} · ★ {rel.rating.toFixed(1)}
+                        {sharedFeatures.length > 0 ? ` · ${translateFeature(sharedFeatures[0])}` : ''}
                       </span>
                     </div>
                     <a
@@ -1114,7 +1186,7 @@ export const ProgramPage: React.FC<ProgramPageProps> = ({
                       }}
                       className="text-xs font-semibold text-blue-700 dark:text-blue-400 hover:underline whitespace-nowrap shrink-0"
                     >
-                      عرض
+                      {t('عرض', 'View')}
                     </a>
                   </li>
                 ))}

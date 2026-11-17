@@ -6,10 +6,12 @@ import {
   Star,
   Sparkles,
   ArrowUpLeft,
+  ArrowUpRight,
   ArrowLeftRight,
   Zap,
 } from 'lucide-react';
 import { FeatureTag, UnifiedProgramItem } from '../types/software';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface QuickCompareModalProps {
   isOpen: boolean;
@@ -30,62 +32,6 @@ interface QuickFeatureRow {
   rightNote?: string;
 }
 
-function buildTopThreeFeatures(
-  primary: UnifiedProgramItem,
-  counterpart: UnifiedProgramItem
-): QuickFeatureRow[] {
-  const orderedFeatures: FeatureTag[] = [];
-
-  for (const f of primary.features) {
-    if (!orderedFeatures.includes(f)) orderedFeatures.push(f);
-  }
-  for (const f of counterpart.features) {
-    if (!orderedFeatures.includes(f)) orderedFeatures.push(f);
-  }
-
-  const rows: QuickFeatureRow[] = orderedFeatures.slice(0, 3).map((feat) => ({
-    id: `feat-${feat}`,
-    label: feat,
-    leftAvailable: primary.features.includes(feat),
-    rightAvailable: counterpart.features.includes(feat),
-  }));
-
-  if (rows.length < 3) {
-    rows.push({
-      id: 'arabic-support',
-      label: 'دعم اللغة العربية',
-      leftAvailable: primary.arabicSupport !== 'محدود',
-      rightAvailable: counterpart.arabicSupport !== 'محدود',
-      leftNote: primary.arabicSupport,
-      rightNote: counterpart.arabicSupport,
-    });
-  }
-
-  if (rows.length < 3) {
-    rows.push({
-      id: 'cross-platform',
-      label: 'تعدد أنظمة التشغيل',
-      leftAvailable: primary.platforms.length >= 2,
-      rightAvailable: counterpart.platforms.length >= 2,
-      leftNote: primary.platforms.join(' / '),
-      rightNote: counterpart.platforms.join(' / '),
-    });
-  }
-
-  if (rows.length < 3) {
-    rows.push({
-      id: 'free-license',
-      label: 'مجاني دون اشتراك',
-      leftAvailable: primary.licenseCategory !== 'مدفوع',
-      rightAvailable: counterpart.licenseCategory !== 'مدفوع',
-      leftNote: primary.licenseCategory,
-      rightNote: counterpart.licenseCategory,
-    });
-  }
-
-  return rows.slice(0, 3);
-}
-
 export const QuickCompareModal: React.FC<QuickCompareModalProps> = ({
   isOpen,
   selectedProgram,
@@ -95,6 +41,15 @@ export const QuickCompareModal: React.FC<QuickCompareModalProps> = ({
   onOpenProgramPage,
   onOpenFullCompare,
 }) => {
+  const {
+    t,
+    isAr,
+    translateFeature,
+    translateLicenseCategory,
+    translateArabicSupport,
+  } = useLanguage();
+  const NavArrow = isAr ? ArrowUpLeft : ArrowUpRight;
+
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -104,10 +59,66 @@ export const QuickCompareModal: React.FC<QuickCompareModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  const topThreeRows = useMemo(() => {
+  const topThreeRows = useMemo<QuickFeatureRow[]>(() => {
     if (!selectedProgram || !counterpartProgram) return [];
-    return buildTopThreeFeatures(selectedProgram, counterpartProgram);
-  }, [selectedProgram, counterpartProgram]);
+    const orderedFeatures: FeatureTag[] = [];
+
+    for (const f of selectedProgram.features) {
+      if (!orderedFeatures.includes(f)) orderedFeatures.push(f);
+    }
+    for (const f of counterpartProgram.features) {
+      if (!orderedFeatures.includes(f)) orderedFeatures.push(f);
+    }
+
+    const rows: QuickFeatureRow[] = orderedFeatures.slice(0, 3).map((feat) => ({
+      id: `feat-${feat}`,
+      label: translateFeature(feat),
+      leftAvailable: selectedProgram.features.includes(feat),
+      rightAvailable: counterpartProgram.features.includes(feat),
+    }));
+
+    if (rows.length < 3) {
+      rows.push({
+        id: 'arabic-support',
+        label: t('دعم اللغة العربية', 'Arabic Language Support'),
+        leftAvailable: selectedProgram.arabicSupport !== 'محدود',
+        rightAvailable: counterpartProgram.arabicSupport !== 'محدود',
+        leftNote: translateArabicSupport(selectedProgram.arabicSupport),
+        rightNote: translateArabicSupport(counterpartProgram.arabicSupport),
+      });
+    }
+
+    if (rows.length < 3) {
+      rows.push({
+        id: 'cross-platform',
+        label: t('تعدد أنظمة التشغيل', 'Cross-Platform Support'),
+        leftAvailable: selectedProgram.platforms.length >= 2,
+        rightAvailable: counterpartProgram.platforms.length >= 2,
+        leftNote: selectedProgram.platforms.join(' / '),
+        rightNote: counterpartProgram.platforms.join(' / '),
+      });
+    }
+
+    if (rows.length < 3) {
+      rows.push({
+        id: 'free-license',
+        label: t('مجاني دون اشتراك', 'Free Without Subscription'),
+        leftAvailable: selectedProgram.licenseCategory !== 'مدفوع',
+        rightAvailable: counterpartProgram.licenseCategory !== 'مدفوع',
+        leftNote: translateLicenseCategory(selectedProgram.licenseCategory),
+        rightNote: translateLicenseCategory(counterpartProgram.licenseCategory),
+      });
+    }
+
+    return rows.slice(0, 3);
+  }, [
+    selectedProgram,
+    counterpartProgram,
+    translateFeature,
+    translateArabicSupport,
+    translateLicenseCategory,
+    t,
+  ]);
 
   if (!isOpen || !selectedProgram || !counterpartProgram) return null;
 
@@ -140,10 +151,13 @@ export const QuickCompareModal: React.FC<QuickCompareModalProps> = ({
                 id="quick-compare-title"
                 className="font-display text-base sm:text-lg font-bold text-slate-900 dark:text-white truncate"
               >
-                المقارنة السريعة
+                {t('المقارنة السريعة', 'Quick Compare')}
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                أهم 3 ميزات بين {selectedProgram.name} و{counterpartProgram.name}
+                {t(
+                  `أهم 3 ميزات بين ${selectedProgram.name} و${counterpartProgram.name}`,
+                  `Top 3 features: ${selectedProgram.name} vs ${counterpartProgram.name}`
+                )}
               </p>
             </div>
           </div>
@@ -151,7 +165,7 @@ export const QuickCompareModal: React.FC<QuickCompareModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            aria-label="إغلاق نافذة المقارنة السريعة"
+            aria-label={t('إغلاق نافذة المقارنة السريعة', 'Close Quick Compare dialog')}
             className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-slate-800 cursor-pointer shrink-0"
           >
             <X className="w-5 h-5" />
@@ -165,7 +179,7 @@ export const QuickCompareModal: React.FC<QuickCompareModalProps> = ({
             {/* Selected Program */}
             <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/50 space-y-2">
               <span className="inline-block text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                البرنامج المختار
+                {t('البرنامج المختار', 'Selected Program')}
               </span>
               <div className="flex items-center gap-2.5 min-w-0">
                 <div
@@ -180,7 +194,7 @@ export const QuickCompareModal: React.FC<QuickCompareModalProps> = ({
                     {selectedProgram.name}
                   </p>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                    {selectedProgram.arabicName}
+                    {isAr ? selectedProgram.arabicName : selectedProgram.vendorOrBadge}
                   </p>
                 </div>
               </div>
@@ -192,7 +206,7 @@ export const QuickCompareModal: React.FC<QuickCompareModalProps> = ({
                       : 'text-emerald-700 dark:text-emerald-400'
                   }`}
                 >
-                  {isSelectedPaid ? 'مدفوع' : selectedProgram.licenseCategory}
+                  {translateLicenseCategory(selectedProgram.licenseCategory)}
                 </span>
                 <span className="inline-flex items-center gap-1 text-slate-700 dark:text-slate-200 tabular-nums">
                   <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
@@ -220,7 +234,7 @@ export const QuickCompareModal: React.FC<QuickCompareModalProps> = ({
                     {counterpartProgram.name}
                   </p>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                    {counterpartProgram.arabicName}
+                    {isAr ? counterpartProgram.arabicName : counterpartProgram.vendorOrBadge}
                   </p>
                 </div>
               </div>
@@ -232,7 +246,9 @@ export const QuickCompareModal: React.FC<QuickCompareModalProps> = ({
                       : 'text-emerald-700 dark:text-emerald-400'
                   }`}
                 >
-                  {isCounterpartPaid ? 'مدفوع' : `${counterpartProgram.licenseCategory} (0$)`}
+                  {isCounterpartPaid
+                    ? translateLicenseCategory(counterpartProgram.licenseCategory)
+                    : `${translateLicenseCategory(counterpartProgram.licenseCategory)} (0$)`}
                 </span>
                 <span className="inline-flex items-center gap-1 text-slate-700 dark:text-slate-200 tabular-nums">
                   <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
@@ -244,14 +260,16 @@ export const QuickCompareModal: React.FC<QuickCompareModalProps> = ({
 
           {/* Top 3 Features Comparison Table */}
           <div className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-            <table className="w-full text-right text-xs sm:text-sm border-collapse">
+            <table className="w-full text-start text-xs sm:text-sm border-collapse">
               <thead className="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400">
                 <tr>
-                  <th className="py-2.5 px-3.5 font-semibold">أهم 3 ميزات</th>
-                  <th className="py-2.5 px-3 font-semibold text-center border-r border-slate-200 dark:border-slate-800">
+                  <th className="py-2.5 px-3.5 font-semibold text-start">
+                    {t('أهم 3 ميزات', 'Top 3 Features')}
+                  </th>
+                  <th className="py-2.5 px-3 font-semibold text-center border-s border-slate-200 dark:border-slate-800">
                     {selectedProgram.name}
                   </th>
-                  <th className="py-2.5 px-3 font-semibold text-center border-r border-slate-200 dark:border-slate-800 text-emerald-700 dark:text-emerald-400">
+                  <th className="py-2.5 px-3 font-semibold text-center border-s border-slate-200 dark:border-slate-800 text-emerald-700 dark:text-emerald-400">
                     {counterpartProgram.name}
                   </th>
                 </tr>
@@ -267,7 +285,7 @@ export const QuickCompareModal: React.FC<QuickCompareModalProps> = ({
                         <span>{row.label}</span>
                       </span>
                     </td>
-                    <td className="py-3 px-3 text-center border-r border-slate-100 dark:border-slate-800">
+                    <td className="py-3 px-3 text-center border-s border-slate-100 dark:border-slate-800">
                       {row.leftNote ? (
                         <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
                           {row.leftNote}
@@ -275,16 +293,16 @@ export const QuickCompareModal: React.FC<QuickCompareModalProps> = ({
                       ) : row.leftAvailable ? (
                         <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
                           <Check className="w-4 h-4" />
-                          <span>متوفر</span>
+                          <span>{t('متوفر', 'Yes')}</span>
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
                           <Minus className="w-4 h-4" />
-                          <span>غير متوفر</span>
+                          <span>{t('غير متوفر', 'No')}</span>
                         </span>
                       )}
                     </td>
-                    <td className="py-3 px-3 text-center border-r border-slate-100 dark:border-slate-800">
+                    <td className="py-3 px-3 text-center border-s border-slate-100 dark:border-slate-800">
                       {row.rightNote ? (
                         <span className="text-xs font-medium text-emerald-700 dark:text-emerald-400">
                           {row.rightNote}
@@ -292,12 +310,12 @@ export const QuickCompareModal: React.FC<QuickCompareModalProps> = ({
                       ) : row.rightAvailable ? (
                         <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
                           <Check className="w-4 h-4" />
-                          <span>متوفر</span>
+                          <span>{t('متوفر', 'Yes')}</span>
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
                           <Minus className="w-4 h-4" />
-                          <span>غير متوفر</span>
+                          <span>{t('غير متوفر', 'No')}</span>
                         </span>
                       )}
                     </td>
@@ -311,7 +329,7 @@ export const QuickCompareModal: React.FC<QuickCompareModalProps> = ({
           {primaryHighlightAdvantage && (
             <p className="text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3.5 py-2.5 leading-relaxed">
               <span className="font-semibold text-emerald-700 dark:text-emerald-400">
-                خلاصة سريعة:{' '}
+                {t('خلاصة سريعة: ', 'Quick Takeaway: ')}
               </span>
               {primaryHighlightAdvantage}
             </p>
@@ -329,7 +347,7 @@ export const QuickCompareModal: React.FC<QuickCompareModalProps> = ({
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <ArrowLeftRight className="w-3.5 h-3.5" />
-            <span>المقارنة الكاملة</span>
+            <span>{t('المقارنة الكاملة', 'Full Comparison')}</span>
           </button>
 
           <div className="flex items-center gap-2">
@@ -341,7 +359,7 @@ export const QuickCompareModal: React.FC<QuickCompareModalProps> = ({
               }}
               className="px-3 py-2 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-200/70 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
-              صفحة {selectedProgram.name}
+              {t(`صفحة ${selectedProgram.name}`, `${selectedProgram.name} Page`)}
             </button>
 
             <button
@@ -352,8 +370,8 @@ export const QuickCompareModal: React.FC<QuickCompareModalProps> = ({
               }}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-semibold transition-colors cursor-pointer"
             >
-              <span>فتح {counterpartProgram.name}</span>
-              <ArrowUpLeft className="w-3.5 h-3.5" />
+              <span>{t(`فتح ${counterpartProgram.name}`, `Open ${counterpartProgram.name}`)}</span>
+              <NavArrow className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

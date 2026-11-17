@@ -446,6 +446,20 @@ export const BIM_ARABIA_TUTORIALS: Record<string, BimArabiaTutorial> = {
     topics: ['تصميم شبكات تصريف مياه الأمطار والصرف الصحي'],
     target: 'commercial',
   },
+  'point-layout-matterport': {
+    hasTutorial: true,
+    title: 'شروحات المسح بالليزر Scan-to-BIM و ReCap على قناة بيم أرابيا',
+    url: 'https://www.youtube.com/@omar_selim1/search?query=Point+Cloud',
+    topics: ['تحويل السحب النقطية Point Clouds إلى نماذج BIM'],
+    target: 'commercial',
+  },
+  'cloudcompare': {
+    hasTutorial: true,
+    title: 'أدوات السحب النقطية و Scan-to-BIM المجانية — بيم أرابيا',
+    url: 'https://www.youtube.com/@omar_selim1/search?query=Scan+to+BIM',
+    topics: ['مراجعة نماذج As-Built والسحب النقطية مجاناً'],
+    target: 'alternative',
+  },
 };
 
 export function resolveBimArabiaTutorial(

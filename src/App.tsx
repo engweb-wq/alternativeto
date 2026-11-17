@@ -34,6 +34,7 @@ import { ToolkitDrawer } from './components/ToolkitDrawer';
 import { CompareModal } from './components/CompareModal';
 import { QuickCompareModal } from './components/QuickCompareModal';
 import { FooterNewsletter } from './components/FooterNewsletter';
+import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
 
 const STORAGE_KEYS = {
   LIKES: 'badeelak_liked_alts_v1',
@@ -65,7 +66,8 @@ function getProgramIdFromHash(): string | null {
   return null;
 }
 
-export default function App() {
+function AppContent() {
+  const { t } = useLanguage();
   const [customEntries, setCustomEntries] = useState<SoftwareEntry[]>(() =>
     loadJson<SoftwareEntry[]>(STORAGE_KEYS.CUSTOM_ENTRIES, [])
   );
@@ -491,7 +493,7 @@ export default function App() {
         ? {
             selectedProgram: selected,
             counterpartProgram: counterpart,
-            counterpartRoleLabel: 'أفضل بديل مجاني',
+            counterpartRoleLabel: t('أفضل بديل مجاني', 'Best Free Alternative'),
           }
         : null;
     }
@@ -509,7 +511,7 @@ export default function App() {
           return {
             selectedProgram: selected,
             counterpartProgram: counterpart,
-            counterpartRoleLabel: 'أفضل بديل مجاني',
+            counterpartRoleLabel: t('أفضل بديل مجاني', 'Best Free Alternative'),
           };
         }
       }
@@ -520,13 +522,13 @@ export default function App() {
         ? {
             selectedProgram: selected,
             counterpartProgram: parentProgram,
-            counterpartRoleLabel: 'البرنامج التجاري المقابل',
+            counterpartRoleLabel: t('البرنامج التجاري المقابل', 'Commercial Counterpart'),
           }
         : null;
     }
 
     return null;
-  }, [quickCompareProgramId, unifiedPrograms]);
+  }, [quickCompareProgramId, unifiedPrograms, t]);
 
   const weeklyFeaturedAlternatives = useMemo(() => {
     const preferredIds = ['ollama', 'bonsai-blenderbim', 'comfyui'];
@@ -793,10 +795,16 @@ export default function App() {
               {displayedCount === 0 ? (
                 <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-12 text-center space-y-4">
                   <h2 className="font-display text-xl font-bold text-slate-900 dark:text-white">
-                    لم يتم العثور على برامج مطابقة لمعايير البحث المتقدم
+                    {t(
+                      'لم يتم العثور على برامج مطابقة لمعايير البحث المتقدم',
+                      'No programs found matching your filter criteria'
+                    )}
                   </h2>
                   <p className="text-sm text-slate-600 dark:text-slate-400 max-w-md mx-auto">
-                    جرب تعديل نظام التشغيل أو نوع الترخيص أو الميزات المختارة، أو أضف البرنامج مباشرة إلى الدليل.
+                    {t(
+                      'جرب تعديل نظام التشغيل أو نوع الترخيص أو الميزات المختارة، أو أضف البرنامج مباشرة إلى الدليل.',
+                      'Try adjusting the selected operating system, license type, or features, or add the software directly to the directory.'
+                    )}
                   </p>
                   <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                     <button
@@ -805,14 +813,14 @@ export default function App() {
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                     >
                       <RotateCcw className="w-4 h-4" />
-                      <span>عرض كل البرامج</span>
+                      <span>{t('عرض كل البرامج', 'Show All Programs')}</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setIsAddModalOpen(true)}
                       className="px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-sm font-semibold cursor-pointer"
                     >
-                      أضف برنامجاً جديداً
+                      {t('أضف برنامجاً جديداً', 'Add New Program')}
                     </button>
                   </div>
                 </div>
@@ -876,7 +884,10 @@ export default function App() {
 
           <div className="pt-4 border-t border-slate-200/80 dark:border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
             <p>
-              بديلك — دليل عربي مفتوح للبدائل المجانية للبرامج الهندسية والتصميمية
+              {t(
+                'بديلك — دليل عربي مفتوح للبدائل المجانية للبرامج الهندسية والتصميمية',
+                'Badeelak — Open Directory of Free & Open-Source Software Alternatives'
+              )}
             </p>
             <div className="flex items-center gap-6">
               <a
@@ -885,21 +896,21 @@ export default function App() {
                 rel="noopener noreferrer"
                 className="hover:text-slate-900 dark:hover:text-white transition-colors"
               >
-                قناة بيم أرابيا على يوتيوب
+                {t('قناة بيم أرابيا على يوتيوب', 'BIM Arabia on YouTube')}
               </a>
               <button
                 type="button"
                 onClick={() => setIsToolkitOpen(true)}
                 className="hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
               >
-                حقيبة أدواتي ({savedItems.length})
+                {t('حقيبة أدواتي', 'My Toolkit')} ({savedItems.length})
               </button>
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(true)}
                 className="hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
               >
-                أضف برنامج أو شرح
+                {t('أضف برنامج أو شرح', 'Add Program or Tutorial')}
               </button>
             </div>
           </div>
@@ -913,7 +924,7 @@ export default function App() {
             <div className="flex items-center gap-3 min-w-0 text-xs sm:text-sm">
               <ArrowLeftRight className="w-4 h-4 text-blue-700 dark:text-blue-400 shrink-0" />
               <span className="font-semibold text-slate-900 dark:text-white whitespace-nowrap tabular-nums">
-                محدد للمقارنة ({compareIds.length}):
+                {t('محدد للمقارنة', 'Selected to compare')} ({compareIds.length}):
               </span>
               <span className="text-slate-600 dark:text-slate-300 truncate">
                 {compareIds
@@ -929,12 +940,14 @@ export default function App() {
                 onClick={() => setIsCompareOpen(true)}
                 className="px-3.5 py-1.5 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer"
               >
-                {compareIds.length >= 2 ? 'عرض جدول المقارنة' : 'أضف برنامجاً ثانياً'}
+                {compareIds.length >= 2
+                  ? t('عرض جدول المقارنة', 'View Comparison Table')
+                  : t('أضف برنامجاً ثانياً', 'Add 2nd Program')}
               </button>
               <button
                 type="button"
                 onClick={() => setCompareIds([])}
-                aria-label="مسح قائمة المقارنة"
+                aria-label={t('مسح قائمة المقارنة', 'Clear comparison list')}
                 className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer"
               >
                 <X className="w-4 h-4" />
@@ -975,7 +988,9 @@ export default function App() {
         isOpen={Boolean(quickComparePair)}
         selectedProgram={quickComparePair?.selectedProgram ?? null}
         counterpartProgram={quickComparePair?.counterpartProgram ?? null}
-        counterpartRoleLabel={quickComparePair?.counterpartRoleLabel ?? 'أفضل بديل مجاني'}
+        counterpartRoleLabel={
+          quickComparePair?.counterpartRoleLabel ?? t('أفضل بديل مجاني', 'Best Free Alternative')
+        }
         onClose={() => setQuickCompareProgramId(null)}
         onOpenProgramPage={openProgramPage}
         onOpenFullCompare={(leftId, rightId) => {
@@ -987,5 +1002,13 @@ export default function App() {
         }}
       />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <LanguageProvider>
+      <AppContent />
+    </LanguageProvider>
   );
 }

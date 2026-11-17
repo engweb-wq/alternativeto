@@ -7,6 +7,7 @@ import {
   OperatingSystem,
   SoftwareCategory,
 } from '../types/software';
+import { useLanguage } from '../i18n/LanguageContext';
 
 export type SortOption = 'popular' | 'highest-rated' | 'bim-first' | 'most-alternatives';
 export type DirectoryViewMode = 'alternatives' | 'unified';
@@ -40,12 +41,7 @@ interface FilterToolbarProps {
 }
 
 const OS_OPTIONS: OperatingSystem[] = ['Windows', 'macOS', 'Linux', 'Web'];
-const LICENSE_OPTIONS: Array<{ value: LicenseCategory | 'all'; label: string }> = [
-  { value: 'all', label: 'كل التراخيص' },
-  { value: 'مجاني', label: 'مجاني' },
-  { value: 'مفتوح المصدر', label: 'مفتوح المصدر' },
-  { value: 'مدفوع', label: 'مدفوع' },
-];
+const LICENSE_VALUES: Array<LicenseCategory | 'all'> = ['all', 'مجاني', 'مفتوح المصدر', 'مدفوع'];
 
 export const FilterToolbar: React.FC<FilterToolbarProps> = ({
   selectedCategory,
@@ -74,12 +70,13 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
   hasActiveFilters,
   onResetFilters,
 }) => {
+  const { t, translateCategory, translateFeature, translateLicenseCategory } = useLanguage();
   const [showAllFeatures, setShowAllFeatures] = useState(true);
 
   return (
     <section
       id="directory"
-      aria-label="البحث المتقدم وتصفية البرامج"
+      aria-label={t('البحث المتقدم وتصفية البرامج', 'Advanced search and software filters')}
       className="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800"
     >
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-6 space-y-5">
@@ -87,7 +84,7 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div
             role="tablist"
-            aria-label="تصنيفات البرامج"
+            aria-label={t('تصنيفات البرامج', 'Software categories')}
             className="flex items-center gap-1.5 p-1 bg-slate-200/70 dark:bg-slate-900 rounded-lg overflow-x-auto max-w-full"
           >
             <button
@@ -101,7 +98,7 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              جميع الفئات
+              {t('جميع الفئات', 'All Categories')}
             </button>
             {CATEGORIES.map((cat) => (
               <button
@@ -116,7 +113,7 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                {cat.label}
+                {translateCategory(cat.id)}
               </button>
             ))}
           </div>
@@ -133,7 +130,7 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                البرامج والبدائل
+                {t('البرامج والبدائل', 'Pairs & Alternatives')}
               </button>
               <button
                 type="button"
@@ -144,7 +141,7 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                نتائج البحث الفردية
+                {t('نتائج البحث الفردية', 'All Programs')}
               </button>
             </div>
 
@@ -154,17 +151,17 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
               className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50/70 dark:bg-blue-950/40 text-xs font-semibold text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-950/60 transition-colors whitespace-nowrap shrink-0 cursor-pointer tabular-nums"
             >
               <ArrowLeftRight className="w-4 h-4" />
-              <span>مقارنة البرامج ({compareCount})</span>
+              <span>{t(`مقارنة البرامج (${compareCount})`, `Compare (${compareCount})`)}</span>
             </button>
 
             <button
               type="button"
               onClick={onToggleDark}
-              aria-label={isDark ? 'التبديل إلى الوضع النهاري' : 'التبديل إلى الوضع الليلي'}
+              aria-label={isDark ? t('التبديل إلى الوضع النهاري', 'Switch to light mode') : t('التبديل إلى الوضع الليلي', 'Switch to dark mode')}
               className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
             >
               {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              <span className="hidden sm:inline">{isDark ? 'نهاري' : 'ليلي'}</span>
+              <span className="hidden sm:inline">{isDark ? t('نهاري', 'Light') : t('ليلي', 'Dark')}</span>
             </button>
           </div>
         </div>
@@ -174,17 +171,22 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
               <SlidersHorizontal className="w-4 h-4 text-blue-700 dark:text-blue-400" />
-              <span>البحث المتقدم: نظام التشغيل، نوع الترخيص، والميزات الرئيسية</span>
+              <span>
+                {t(
+                  'البحث المتقدم: نظام التشغيل، نوع الترخيص، والميزات الرئيسية',
+                  'Advanced Filters: OS, License, and Key Features'
+                )}
+              </span>
             </div>
 
             <div className="flex items-center gap-3">
               <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-                {resultCount} نتيجة مطابقة
+                {t(`${resultCount} نتيجة مطابقة`, `${resultCount} results`)}
               </span>
 
               <div className="flex items-center gap-2">
                 <label htmlFor="sort-select" className="text-xs text-slate-500 dark:text-slate-400">
-                  ترتيب:
+                  {t('ترتيب:', 'Sort:')}
                 </label>
                 <select
                   id="sort-select"
@@ -192,10 +194,10 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
                   onChange={(e) => onSortChange(e.target.value as SortOption)}
                   className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-600"
                 >
-                  <option value="popular">الأكثر تصويتاً</option>
-                  <option value="highest-rated">الأعلى تقييماً بالنجوم</option>
-                  <option value="bim-first">شروحات بيم أرابيا أولاً</option>
-                  <option value="most-alternatives">الأكثر بدائل متاحة</option>
+                  <option value="popular">{t('الأكثر تصويتاً', 'Most Popular')}</option>
+                  <option value="highest-rated">{t('الأعلى تقييماً بالنجوم', 'Highest Rated')}</option>
+                  <option value="bim-first">{t('شروحات بيم أرابيا أولاً', 'BIM Arabia First')}</option>
+                  <option value="most-alternatives">{t('الأكثر بدائل متاحة', 'Most Alternatives')}</option>
                 </select>
               </div>
 
@@ -206,7 +208,7 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap shrink-0"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
-                  <span>إعادة ضبط</span>
+                  <span>{t('إعادة ضبط', 'Reset')}</span>
                 </button>
               )}
             </div>
@@ -216,22 +218,22 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
             {/* License Filter */}
             <div className="lg:col-span-4 space-y-1.5">
               <span className="block text-xs font-medium text-slate-500 dark:text-slate-400">
-                نوع الترخيص
+                {t('نوع الترخيص', 'License Type')}
               </span>
               <div className="flex flex-wrap items-center gap-1.5">
-                {LICENSE_OPTIONS.map((opt) => (
+                {LICENSE_VALUES.map((licVal) => (
                   <button
-                    key={opt.value}
+                    key={licVal}
                     type="button"
-                    aria-pressed={selectedLicense === opt.value}
-                    onClick={() => onLicenseChange(opt.value)}
+                    aria-pressed={selectedLicense === licVal}
+                    onClick={() => onLicenseChange(licVal)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                      selectedLicense === opt.value
+                      selectedLicense === licVal
                         ? 'bg-blue-700 border-blue-700 text-white dark:bg-blue-600 dark:border-blue-600'
                         : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
                     }`}
                   >
-                    {opt.label}
+                    {licVal === 'all' ? t('كل التراخيص', 'All Licenses') : translateLicenseCategory(licVal)}
                   </button>
                 ))}
               </div>
@@ -240,7 +242,7 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
             {/* Operating System Multi-Select Filter */}
             <div className="lg:col-span-4 space-y-1.5">
               <span className="block text-xs font-medium text-slate-500 dark:text-slate-400">
-                نظام التشغيل (يمكن اختيار أكثر من نظام)
+                {t('نظام التشغيل (يمكن اختيار أكثر من نظام)', 'Operating System (Multi-select)')}
               </span>
               <div className="flex flex-wrap items-center gap-1.5">
                 {OS_OPTIONS.map((os) => {
@@ -264,10 +266,10 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
               </div>
             </div>
 
-            {/* Quick Content Filters: BIM Arabia & Arabic Origin */}
+            {/* Quick Content Filters: BIM Arabia, Arabic Origin, GitHub */}
             <div className="lg:col-span-4 space-y-1.5">
               <span className="block text-xs font-medium text-slate-500 dark:text-slate-400">
-                فلاتر المحتوى والشروحات
+                {t('فلاتر المحتوى والشروحات', 'Tutorials & Sources')}
               </span>
               <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
                 <button
@@ -281,7 +283,7 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
                   }`}
                 >
                   <Youtube className="w-4 h-4 shrink-0" />
-                  <span>شروحات بيم أرابيا</span>
+                  <span>{t('شروحات بيم أرابيا', 'BIM Arabia')}</span>
                 </button>
 
                 <button
@@ -294,7 +296,7 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
                       : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
                   }`}
                 >
-                  <span>بدائل عربية</span>
+                  <span>{t('بدائل عربية', 'Arabic Origin')}</span>
                 </button>
 
                 <button
@@ -318,14 +320,21 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
           <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                الميزات الرئيسية {selectedFeatures.length > 0 ? `(تم اختيار ${selectedFeatures.length})` : ''}
+                {t('الميزات الرئيسية', 'Key Features')}{' '}
+                {selectedFeatures.length > 0
+                  ? t(`(تم اختيار ${selectedFeatures.length})`, `(${selectedFeatures.length} selected)`)
+                  : ''}
               </span>
               <button
                 type="button"
                 onClick={() => setShowAllFeatures((v) => !v)}
                 className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 dark:text-blue-400 hover:underline cursor-pointer"
               >
-                <span>{showAllFeatures ? 'إخفاء الميزات' : 'عرض الميزات'}</span>
+                <span>
+                  {showAllFeatures
+                    ? t('إخفاء الميزات', 'Hide Features')
+                    : t('عرض الميزات', 'Show Features')}
+                </span>
                 {showAllFeatures ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
               </button>
             </div>
@@ -346,7 +355,7 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
                           : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
                       }`}
                     >
-                      {feat}
+                      {translateFeature(feat)}
                     </button>
                   );
                 })}
@@ -358,3 +367,4 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
     </section>
   );
 };
+
